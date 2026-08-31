@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control de Préstamos - UNDAC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .animate-pulse-soft { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
+    </style>
+</head>
+<body class="bg-[#f8fafc] flex min-h-screen text-slate-900">
+
+    <aside class="w-80 bg-[#050a18] text-white p-8 shadow-2xl flex flex-col sticky top-0 h-screen">
+        <div class="mb-12">
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="bg-rose-500 p-2 rounded-xl shadow-lg shadow-rose-500/20">
+                    <i class="fas fa-book-open text-xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold tracking-tight italic">UNDAC <span class="text-sky-500">LIB</span></h2>
+            </div>
+            <p class="text-[10px] text-slate-500 uppercase tracking-[0.4em] font-black">Módulo Administrativo</p>
+        </div>
+
+        <nav class="flex-1 space-y-3">
+            <a href="/admin" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'carga' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-upload group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Carga Masiva</span>
+            </a>
+
+            <a href="/admin/inventario" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'inventario' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-boxes-stacked group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Inventario Total</span>
+            </a>
+
+            <a href="/admin/reportes" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'reportes' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-user-clock group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Préstamos Activos</span>
+            </a>
+
+            <a href="/admin/usuarios" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'usuarios' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-user-shield group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Gestión de Usuarios</span>
+            </a>
+
+            <a href="/prestamos" target="_blank" class="flex items-center space-x-4 p-4 mt-6 bg-sky-600 hover:bg-sky-500 text-white rounded-2xl transition-all shadow-lg shadow-sky-900/20 group">
+                <div class="w-8 h-8 flex items-center justify-center bg-white/20 rounded-lg">
+                    <i class="fas fa-barcode text-sm"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-black uppercase leading-none opacity-70">Atención</span>
+                    <span class="text-sm font-bold leading-tight">Módulo de Préstamos</span>
+                </div>
+                <i class="fas fa-external-link-alt text-[10px] ml-auto opacity-50 group-hover:opacity-100"></i>
+            </a>
+        </nav>
+
+        <div class="pt-8 border-t border-white/5">
+            <a href="/logout" class="flex items-center space-x-4 p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all text-sm font-black uppercase justify-center">
+                <i class="fas fa-power-off"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-12 overflow-y-auto">
+        
+        <header class="flex justify-between items-start mb-10">
+            <div>
+                <h1 class="text-4xl font-black text-slate-900 tracking-tight">Reporte de Préstamos</h1>
+                <p class="text-slate-500 font-medium mt-1">Control de deudores activos y descarga de historial.</p>
+            </div>
+            <div class="flex space-x-4">
+                <div class="bg-white p-5 px-8 rounded-3xl shadow-sm border border-slate-100 text-center">
+                    <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Libros Fuera</span>
+                    <span class="text-2xl font-black text-slate-900 leading-none">{{ deudores|length }}</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 mb-8">
+            <h3 class="text-[11px] font-black text-sky-600 uppercase tracking-[0.2em] mb-6 flex items-center">
+                <i class="fas fa-download mr-2"></i> Exportar Historial a Excel
+            </h3>
+            <div class="flex flex-col md:flex-row items-end gap-6">
+                <div class="flex-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-3">Fecha de Inicio</label>
+                    <input type="date" id="fecha-inicio" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-2xl font-bold text-slate-700 outline-none focus:border-emerald-500 transition-all">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-3">Fecha Final</label>
+                    <input type="date" id="fecha-fin" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-2xl font-bold text-slate-700 outline-none focus:border-emerald-500 transition-all">
+                </div>
+                <button onclick="descargarExcelHistorial()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all flex items-center space-x-3 shadow-xl shadow-emerald-100">
+                    <i class="fas fa-file-excel text-lg"></i>
+                    <span>Descargar Reporte</span>
+                </button>
+            </div>
+        </section>
+
+        <div class="bg-white rounded-[3rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+            <div class="p-8 border-b border-slate-50">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Lista de Libros No Devueltos</h3>
+            </div>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/50">
+                        <th class="p-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Lector</th>
+                        <th class="p-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Libro</th>
+                        <th class="p-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Contacto</th>
+                        <th class="p-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Estado</th>
+                        <th class="p-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Gestión</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    {% for deudor in deudores %}
+                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                        <td class="p-8">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center group-hover:text-sky-500 transition-all shadow-sm">
+                                    <i class="fas fa-user text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-slate-800 leading-tight uppercase text-sm">{{ deudor.UsuarioNombre }}</p>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-mono font-bold tracking-widest">DNI: {{ deudor.UsuarioDNI }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-8 max-w-xs">
+                            <p class="text-xs font-bold text-slate-700 uppercase leading-snug line-clamp-2">{{ deudor.LibroTitulo }}</p>
+                            <p class="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-tighter">
+                                <i class="fas fa-clock mr-1"></i>Vence: {{ deudor.FechaDevolucionEstimada.strftime('%d/%m/%Y') }}
+                            </p>
+                        </td>
+                        <td class="p-8">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-black text-slate-700">
+                                    <i class="fas fa-phone-alt mr-2 text-sky-400 text-[10px]"></i>{{ deudor.Celular or 'S/N' }}
+                                </span>
+                                {% if deudor.Celular and deudor.Celular != 'S/N' %}
+                                <a href="https://wa.me/51{{ deudor.Celular }}?text=Hola%20{{ deudor.UsuarioNombre }},%20te%20saludamos%20de%20la%20Biblioteca%20UNDAC.%20Tienes%20pendiente%20la%20devolución%20del%20libro:%20{{ deudor.LibroTitulo }}" 
+                                   target="_blank" 
+                                   class="text-[9px] text-emerald-600 font-black uppercase mt-1.5 flex items-center hover:text-emerald-700 transition-colors">
+                                    <i class="fab fa-whatsapp mr-1 text-xs"></i> WhatsApp
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="p-8 text-center">
+                            {% if deudor.DiasRetraso > 0 %}
+                            <div class="inline-block bg-rose-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-rose-100 animate-pulse-soft">
+                                Mora +{{ deudor.DiasRetraso }}d
+                            </div>
+                            {% else %}
+                            <div class="inline-block bg-sky-500 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-sky-100">
+                                Al Día
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="p-8 text-center">
+                            <button onclick="confirmarDevolucion(this)"
+                                data-pid="{{ deudor.PrestamoID }}"
+                                data-lid="{{ deudor.LibroID }}"
+                                data-titulo="{{ deudor.LibroTitulo }}"
+                                class="bg-slate-900 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[9px] font-black transition-all transform hover:scale-105 flex items-center mx-auto space-x-2 shadow-xl shadow-slate-200">
+                                <i class="fas fa-undo-alt"></i>
+                                <span>DEVOLVER</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="p-32 text-center">
+                            <i class="fas fa-check-circle text-6xl text-slate-100 mb-6 block"></i>
+                            <h3 class="text-xl font-black text-slate-300 uppercase italic">No hay préstamos activos</h3>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+    // Función para descargar Excel Histórico
+    function descargarExcelHistorial() {
+        const inicio = document.getElementById('fecha-inicio').value;
+        const fin = document.getElementById('fecha-fin').value;
+
+        if(!inicio || !fin) {
+            Swal.fire({
+                title: 'Atención',
+                text: 'Selecciona un rango de fechas para el reporte.',
+                icon: 'warning',
+                customClass: { popup: 'rounded-[2rem]' }
+            });
+            return;
+        }
+
+        // Redirigir a la ruta en app_prestamos.py
+        window.location.href = `/admin/exportar_excel?inicio=${inicio}&fin=${fin}`;
+    }
+
+    // Función para procesar devolución
+    async function confirmarDevolucion(boton) {
+        const pId = boton.getAttribute('data-pid');
+        const lId = boton.getAttribute('data-lid');
+        const titulo = boton.getAttribute('data-titulo');
+
+        const result = await Swal.fire({
+            title: '¿Registrar Devolución?',
+            text: `El libro "${titulo}" volverá a estar disponible.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sí, devuelto',
+            cancelButtonText: 'Cancelar',
+            customClass: { popup: 'rounded-[2.5rem]' }
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`/admin/devolver/${pId}/${lId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    Swal.fire({
+                        title: '¡Logrado!',
+                        text: data.message,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
+            }
+        }
+    }
+
+    // Inicializar fechas (Hoy)
+    document.getElementById('fecha-fin').value = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario UNDAC - Gestión Profesional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-[#f8fafc] flex min-h-screen text-slate-900">
+
+    <aside class="w-80 bg-[#050a18] text-white p-8 shadow-2xl flex flex-col sticky top-0 h-screen">
+        <div class="mb-12">
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="bg-rose-500 p-2 rounded-xl shadow-lg shadow-rose-500/20">
+                    <i class="fas fa-book-open text-xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold tracking-tight italic">UNDAC <span class="text-sky-500">LIB</span></h2>
+            </div>
+            <p class="text-[10px] text-slate-500 uppercase tracking-[0.4em] font-black">Módulo Administrativo</p>
+        </div>
+
+        <nav class="flex-1 space-y-3">
+            <a href="/admin" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'carga' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-upload group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Carga Masiva</span>
+            </a>
+
+            <a href="/admin/inventario" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'inventario' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-boxes-stacked group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Inventario Total</span>
+            </a>
+
+            <a href="/admin/reportes" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'reportes' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-user-clock group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Préstamos Activos</span>
+            </a>
+
+            <a href="/admin/usuarios" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'usuarios' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-user-shield group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Gestión de Usuarios</span>
+            </a>
+
+            <a href="/prestamos" target="_blank" class="flex items-center space-x-4 p-4 mt-6 bg-sky-600 hover:bg-sky-500 text-white rounded-2xl transition-all shadow-lg shadow-sky-900/20 group">
+                <div class="w-8 h-8 flex items-center justify-center bg-white/20 rounded-lg">
+                    <i class="fas fa-barcode text-sm"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-black uppercase leading-none opacity-70">Atención</span>
+                    <span class="text-sm font-bold leading-tight">Módulo de Préstamos</span>
+                </div>
+                <i class="fas fa-external-link-alt text-[10px] ml-auto opacity-50 group-hover:opacity-100"></i>
+            </a>
+        </nav>
+
+        <div class="pt-8 border-t border-white/5">
+            <a href="/logout" class="flex items-center space-x-4 p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all text-sm font-black uppercase justify-center">
+                <i class="fas fa-power-off"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-12 overflow-y-auto custom-scrollbar">
+        <header class="flex justify-between items-center mb-12">
+            <div>
+                <h1 class="text-4xl font-black text-slate-900 tracking-tight">Inventario General</h1>
+                <p class="text-slate-500 font-medium mt-1 italic">Explorando 12,587 registros en tiempo real.</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="bg-white p-4 px-8 rounded-3xl shadow-sm border border-slate-100">
+                    <span class="block text-[10px] uppercase font-black text-slate-400 tracking-widest text-center">Resultados</span>
+                    <span id="contador-total" class="text-3xl font-black text-sky-600 block text-center leading-none mt-1">{{ libros|length }}</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="mb-10 relative max-w-3xl group">
+            <div class="absolute inset-y-0 left-0 pl-7 flex items-center pointer-events-none">
+                <i class="fas fa-search text-slate-300 group-focus-within:text-sky-500 transition-colors text-lg"></i>
+            </div>
+            <input type="text" id="input-busqueda" 
+                class="w-full pl-16 pr-20 py-6 bg-white border-2 border-transparent rounded-[2.5rem] shadow-xl shadow-slate-200/50 focus:ring-0 focus:border-sky-500 outline-none transition-all font-bold text-slate-700 text-xl placeholder:text-slate-300"
+                placeholder="Busque por Título, Autor o Código de Barras...">
+            
+            <div id="loading-spinner" class="absolute inset-y-0 right-8 flex items-center hidden">
+                <i class="fas fa-circle-notch fa-spin text-sky-500 text-xl"></i>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-[3rem] shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/50 border-b border-slate-100">
+                            <th class="p-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Título del Ejemplar</th>
+                            <th class="p-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Código</th>
+                            <th class="p-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Materia</th>
+                            <th class="p-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Estado</th>
+                            <th class="p-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Control</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contenedor-filas" class="divide-y divide-slate-50">
+                        {% for libro in libros %}
+                        <tr class="hover:bg-sky-50/30 transition-colors group">
+                            <td class="p-8 max-w-md">
+                                <div class="flex items-start space-x-5">
+                                    <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 border border-sky-200 shadow-sm">
+                                        {{ libro.Titulo[:1] }}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-slate-800 leading-snug group-hover:text-sky-600 transition-colors uppercase text-sm">{{ libro.Titulo }}</p>
+                                        <p class="text-[11px] text-slate-400 mt-2 font-bold uppercase italic tracking-tighter">{{ libro.Autor or 'AUTOR DESCONOCIDO' }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-8 text-center">
+                                <span class="bg-white text-slate-600 px-4 py-2 rounded-xl text-xs font-black font-mono border-2 border-slate-100 shadow-sm">
+                                    <i class="fas fa-barcode mr-2 opacity-30"></i>{{ libro.Secuenc }}
+                                </span>
+                            </td>
+                            <td class="p-8 text-center">
+                                <span class="text-[10px] font-black text-slate-500 uppercase bg-slate-100 px-3 py-1 rounded-lg">{{ libro.Materia or 'General' }}</span>
+                            </td>
+                            <td class="p-8 text-center">
+                                <span class="{% if libro.EstadoLibro == 'Disponible' %}bg-emerald-500 text-white shadow-emerald-200{% else %}bg-amber-500 text-white shadow-amber-200{% endif %} px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">
+                                    {{ libro.EstadoLibro }}
+                                </span>
+                            </td>
+                            <td class="p-8 text-center">
+                                <div class="flex justify-center space-x-2">
+                                    <button class="w-10 h-10 bg-slate-100 text-slate-400 hover:bg-sky-500 hover:text-white rounded-xl transition-all"><i class="fas fa-pen text-xs"></i></button>
+                                    <button class="w-10 h-10 bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white rounded-xl transition-all"><i class="fas fa-trash text-xs"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div id="mensaje-vacio" class="hidden p-32 text-center">
+                <i class="fas fa-search-minus text-6xl text-slate-200 mb-6"></i>
+                <h3 class="text-2xl font-black text-slate-300 uppercase">Sin resultados</h3>
+                <p class="text-slate-400 italic">No encontramos ningún libro con ese nombre o código.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let debounceTimer;
+        const inputBusqueda = document.getElementById('input-busqueda');
+        const tabla = document.getElementById('contenedor-filas');
+        const spinner = document.getElementById('loading-spinner');
+        const contador = document.getElementById('contador-total');
+        const emptyState = document.getElementById('mensaje-vacio');
+
+        inputBusqueda.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            clearTimeout(debounceTimer);
+            spinner.classList.remove('hidden');
+
+            debounceTimer = setTimeout(async () => {
+                try {
+                    // Ahora buscamos si el texto tiene al menos 1 letra (ideal para códigos cortos)
+                    const response = await fetch(`/admin/api/buscar_inventario?q=${encodeURIComponent(query)}`);
+                    const libros = await response.json();
+                    
+                    tabla.innerHTML = '';
+                    contador.textContent = libros.length;
+
+                    if (libros.length === 0) {
+                        emptyState.classList.remove('hidden');
+                    } else {
+                        emptyState.classList.add('hidden');
+                        libros.forEach(libro => {
+                            const badgeClass = libro.EstadoLibro === 'Disponible' 
+                                ? 'bg-emerald-500 text-white shadow-emerald-200' 
+                                : 'bg-amber-500 text-white shadow-amber-200';
+                            
+                            const html = `
+                            <tr class="hover:bg-sky-50/30 transition-colors group animate-fade-in">
+                                <td class="p-8 max-w-md">
+                                    <div class="flex items-start space-x-5">
+                                        <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 border border-sky-200 shadow-sm">
+                                            ${libro.Titulo.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p class="font-bold text-slate-800 leading-snug group-hover:text-sky-600 transition-colors uppercase text-sm">${libro.Titulo}</p>
+                                            <p class="text-[11px] text-slate-400 mt-2 font-bold uppercase italic tracking-tighter">${libro.Autor || 'AUTOR DESCONOCIDO'}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="p-8 text-center">
+                                    <span class="bg-white text-slate-600 px-4 py-2 rounded-xl text-xs font-black font-mono border-2 border-slate-100 shadow-sm">
+                                        <i class="fas fa-barcode mr-2 opacity-30"></i>${libro.Secuenc}
+                                    </span>
+                                </td>
+                                <td class="p-8 text-center">
+                                    <span class="text-[10px] font-black text-slate-500 uppercase bg-slate-100 px-3 py-1 rounded-lg">${libro.Materia || 'General'}</span>
+                                </td>
+                                <td class="p-8 text-center">
+                                    <span class="${badgeClass} px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">
+                                        ${libro.EstadoLibro}
+                                    </span>
+                                </td>
+                                <td class="p-8 text-center">
+                                    <div class="flex justify-center space-x-2">
+                                        <button class="w-10 h-10 bg-slate-100 text-slate-400 hover:bg-sky-500 hover:text-white rounded-xl transition-all"><i class="fas fa-pen text-xs"></i></button>
+                                        <button class="w-10 h-10 bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white rounded-xl transition-all"><i class="fas fa-trash text-xs"></i></button>
+                                    </div>
+                                </td>
+                            </tr>`;
+                            tabla.insertAdjacentHTML('beforeend', html);
+                        });
+                    }
+                } catch (err) {
+                    console.error("Error buscando en inventario:", err);
+                } finally {
+                    spinner.classList.add('hidden');
+                }
+            }, 350); // Tiempo de espera optimizado
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retorno de Material - UNDAC LIB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .bg-dark-undac { background-color: #050a18; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] flex min-h-screen text-slate-900">
+
+    <aside class="w-80 bg-dark-undac text-white p-8 shadow-2xl flex flex-col sticky top-0 h-screen">
+        <div class="mb-12">
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="bg-emerald-500 p-2 rounded-xl shadow-lg shadow-emerald-500/20">
+                    <i class="fas fa-undo-alt text-xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold tracking-tight italic">UNDAC <span class="text-sky-500">LIB</span></h2>
+            </div>
+            <p class="text-[10px] text-slate-500 uppercase tracking-[0.4em] font-black">Módulo de Retorno</p>
+        </div>
+
+        <nav class="flex-1 space-y-4">
+            <a href="/prestamos" class="flex items-center space-x-4 p-5 text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all group">
+                <i class="fas fa-barcode text-lg group-hover:text-sky-400"></i>
+                <span class="font-bold text-sm tracking-tight">Realizar Préstamo</span>
+            </a>
+
+            <a href="/devoluciones" class="flex items-center space-x-4 p-5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-2xl shadow-sm transition-all">
+                <i class="fas fa-reply text-lg"></i>
+                <span class="font-bold text-sm tracking-tight">Devolver Libro</span>
+            </a>
+
+            {% if rol_sistema == 'Administrador' %}
+            <div class="pt-10 pb-2">
+                <div class="h-[1px] bg-white/5 w-full mb-6"></div>
+                <p class="text-[9px] text-slate-600 uppercase font-black tracking-[0.2em] px-4 mb-4 text-center">Administración</p>
+                <a href="/admin/reportes" class="flex items-center space-x-4 p-4 text-slate-500 hover:text-rose-400 hover:bg-rose-500/5 rounded-2xl transition-all">
+                    <i class="fas fa-cog"></i>
+                    <span class="text-xs font-bold uppercase tracking-widest">Panel de Gestión</span>
+                </a>
+            </div>
+            {% endif %}
+        </nav>
+
+        <div class="pt-8 border-t border-white/5">
+            <a href="/logout" class="flex items-center space-x-4 p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all text-[11px] font-black uppercase justify-center shadow-lg shadow-red-900/10">
+                <i class="fas fa-power-off"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-12 overflow-y-auto">
+        <header class="flex justify-between items-center mb-12">
+            <div>
+                <h1 class="text-4xl font-black text-slate-900 tracking-tight uppercase italic">Recepción de Libros</h1>
+                <p class="text-slate-500 font-medium mt-1">Escanea el código de barras para identificar el préstamo.</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[9px] text-slate-400 uppercase font-black tracking-widest leading-none">Operador Activo</p>
+                <p class="font-bold text-emerald-600 text-sm">
+                    {{ usuario_sistema }} 
+                    <span class="text-slate-400 text-[10px] font-normal ml-1">[{{ rol_sistema }}]</span>
+                </p>
+            </div>
+        </header>
+
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/50 border border-slate-100 mb-10">
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                        <i class="fas fa-barcode text-2xl text-emerald-500 transition-transform group-focus-within:scale-110"></i>
+                    </div>
+                    <input type="text" id="input-codigo" 
+                        class="w-full pl-16 pr-6 py-8 bg-slate-50 border-2 border-slate-50 rounded-[2rem] text-2xl font-black text-slate-800 outline-none focus:border-emerald-500 focus:bg-white transition-all placeholder:text-slate-300 text-center uppercase"
+                        placeholder="ESCANEAR CÓDIGO DE BARRAS" autocomplete="off">
+                </div>
+            </div>
+
+            <div id="resultado-devolucion" class="hidden transform transition-all scale-95 opacity-0">
+                <div class="bg-dark-undac text-white p-12 rounded-[4rem] shadow-2xl relative overflow-hidden">
+                    <div class="absolute -right-20 -top-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"></div>
+
+                    <div class="relative z-10">
+                        <span class="bg-emerald-500 text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20">
+                            Préstamo Activo Detectado
+                        </span>
+
+                        <h2 id="info-libro" class="text-3xl font-black my-8 text-emerald-400 uppercase tracking-tight leading-tight">---</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 border-t border-white/10 pt-10">
+                            <div>
+                                <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-3">Lector Poseedor</p>
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-sky-400">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div>
+                                        <p id="info-usuario" class="font-black text-lg uppercase leading-none">---</p>
+                                        <p id="info-dni" class="text-xs text-slate-500 font-bold mt-1 tracking-widest">---</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-3">Fecha de Vencimiento</p>
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-rose-500">
+                                        <i class="fas fa-calendar-times"></i>
+                                    </div>
+                                    <p id="info-vence" class="font-black text-xl text-rose-500 uppercase">---</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="procesarDevolucionFinal()" class="w-full mt-12 bg-emerald-500 hover:bg-emerald-400 text-white p-6 rounded-3xl font-black uppercase tracking-[0.2em] text-sm transition-all transform hover:scale-[1.02] shadow-2xl shadow-emerald-500/20 flex items-center justify-center gap-3">
+                            <i class="fas fa-check-double"></i>
+                            Confirmar Ingreso a Almacén
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let prestamoEncontrado = null;
+        const input = document.getElementById('input-codigo');
+
+        window.onload = () => input.focus();
+
+        input.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                const codigo = e.target.value.trim();
+                if (!codigo) return;
+
+                try {
+                    const response = await fetch(`/api/buscar_prestamo_por_libro/${codigo}`);
+                    const res = await response.json();
+
+                    if (res.success) {
+                        prestamoEncontrado = res.data;
+                        document.getElementById('info-libro').textContent = res.data.titulo;
+                        document.getElementById('info-usuario').textContent = res.data.nombre;
+                        document.getElementById('info-dni').textContent = `DNI: ${res.data.dni}`;
+                        document.getElementById('info-vence').textContent = res.data.vencimiento;
+                        
+                        const card = document.getElementById('resultado-devolucion');
+                        card.classList.remove('hidden');
+                        setTimeout(() => {
+                            card.classList.add('scale-100', 'opacity-100');
+                        }, 50);
+                        input.value = ''; 
+                    } else {
+                        Swal.fire({
+                            title: 'No encontrado',
+                            text: res.message,
+                            icon: 'info',
+                            confirmButtonColor: '#10b981'
+                        });
+                        e.target.value = '';
+                    }
+                } catch (error) {
+                    Swal.fire('Error', 'No se pudo consultar el servidor', 'error');
+                }
+            }
+        });
+
+        async function procesarDevolucionFinal() {
+            if (!prestamoEncontrado) return;
+
+            // ESTA ES LA RUTA QUE ARREGLA EL 403
+            const response = await fetch(`/api/procesar_devolucion/${prestamoEncontrado.prestamo_id}/${prestamoEncontrado.libro_id}`, {
+                method: 'POST'
+            });
+            const res = await response.json();
+
+            if (res.success) {
+                Swal.fire({
+                    title: '¡Recibido!',
+                    text: 'El libro ha vuelto al inventario.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => location.reload());
+            } else {
+                Swal.fire('Error', res.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

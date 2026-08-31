@@ -1,0 +1,17 @@
+@media print {
+    body * { visibility: hidden; }
+    #seccion-impresion, #seccion-impresion * { visibility: visible; }
+    #seccion-impresion {
+        position: absolute;
+        left: 0; top: 0;
+        width: 80mm; /* Ancho típico de ticketera */
+    }
+    .voucher {
+        border-bottom: 2px dashed #000;
+        padding: 10px;
+        margin-bottom: 20px;
+        font-family: monospace;
+        font-size: 12px;
+    }
+    .titulo-voucher { font-weight: bold; text-align: center; }
+}

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo de Atención - UNDAC LIB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .bg-dark-undac { background-color: #050a18; }
+
+        @media screen {
+            #seccion-impresion { display: none; }
+        }
+        @media print {
+            body * { visibility: hidden; }
+            #seccion-impresion, #seccion-impresion * { visibility: visible; }
+            #seccion-impresion {
+                position: absolute;
+                left: 0; top: 0;
+                width: 80mm;
+                font-family: 'Courier New', Courier, monospace;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] flex min-h-screen text-slate-900">
+
+    <aside class="w-80 bg-dark-undac text-white p-8 shadow-2xl flex flex-col sticky top-0 h-screen">
+        <div class="mb-12">
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="bg-sky-500 p-2 rounded-xl shadow-lg shadow-sky-500/20">
+                    <i class="fas fa-barcode text-xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold tracking-tight italic">UNDAC <span class="text-sky-500">LIB</span></h2>
+            </div>
+            <p class="text-[10px] text-slate-500 uppercase tracking-[0.4em] font-black">Módulo Operativo</p>
+        </div>
+
+        <nav class="flex-1 space-y-4">
+            <a href="/prestamos" class="flex items-center space-x-4 p-5 bg-sky-500/10 text-sky-500 border border-sky-500/20 rounded-2xl shadow-sm transition-all">
+                <i class="fas fa-hand-holding-hand text-lg"></i>
+                <span class="font-bold text-sm tracking-tight">Realizar Préstamo</span>
+            </a>
+
+            <a href="/devoluciones" class="flex items-center space-x-4 p-5 text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all group">
+                <i class="fas fa-reply text-lg group-hover:text-emerald-400"></i>
+                <span class="font-bold text-sm tracking-tight">Devolver Libro</span>
+            </a>
+
+            {% if rol_sistema == 'Administrador' %}
+            <div class="pt-10 pb-2">
+                <div class="h-[1px] bg-white/5 w-full mb-6"></div>
+                <p class="text-[9px] text-slate-600 uppercase font-black tracking-[0.2em] px-4 mb-4 text-center">Administración</p>
+                <a href="/admin/reportes" class="flex items-center space-x-4 p-4 text-slate-500 hover:text-rose-400 hover:bg-rose-500/5 rounded-2xl transition-all">
+                    <i class="fas fa-cog"></i>
+                    <span class="text-xs font-bold uppercase tracking-widest">Panel de Gestión</span>
+                </a>
+            </div>
+            {% endif %}
+        </nav>
+
+        <div class="pt-8 border-t border-white/5">
+            <a href="/logout" class="flex items-center space-x-4 p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all text-[11px] font-black uppercase justify-center shadow-lg shadow-red-900/10">
+                <i class="fas fa-power-off"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-12 overflow-y-auto">
+        <header class="flex justify-between items-center mb-12">
+            <div>
+                <h1 class="text-4xl font-black text-slate-900 tracking-tight uppercase italic">Atención al Lector</h1>
+                <p class="text-slate-500 font-medium mt-1">Capture el DNI y el código del libro para generar el voucher.</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[9px] text-slate-400 uppercase font-black tracking-widest leading-none">Operador Activo</p>
+                <p class="font-bold text-sky-600 text-sm">
+                    {{ usuario_sistema }} 
+                    <span class="text-slate-400 text-[10px] font-normal ml-1">[{{ rol_sistema }}]</span>
+                </p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <div class="lg:col-span-7 space-y-8">
+                
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200">
+                    <h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center">
+                        <i class="fas fa-id-card mr-3 text-sky-500"></i> Identificación del Lector
+                    </h3>
+                    <input type="text" id="input-dni" autofocus
+                        class="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-sky-500 focus:bg-white outline-none transition-all text-xl font-bold placeholder:text-slate-400"
+                        placeholder="Escanee DNI o ingrese número">
+                    
+                    <div class="mt-6 p-6 bg-sky-50/50 rounded-3xl border border-sky-100/50 flex items-center space-x-4">
+                        <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-sky-500 shadow-sm border border-sky-100">
+                            <i class="fas fa-user-graduate text-2xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h2 id="nombre-lector" class="font-black text-2xl text-slate-800 uppercase leading-none">Esperando...</h2>
+                            <div id="info-lector" class="text-sky-600 text-xs font-bold mt-1 uppercase tracking-wider italic">Validación requerida</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200">
+                    <h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center">
+                        <i class="fas fa-book-open mr-3 text-emerald-500"></i> Búsqueda de ejemplar
+                    </h3>
+                    <input type="text" id="input-libro"
+                        class="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:bg-white outline-none transition-all text-xl font-bold placeholder:text-slate-400"
+                        placeholder="Escanee código de barras o escriba título">
+                    
+                    <div class="mt-8">
+                        <div class="flex items-start space-x-5">
+                            <div id="icon-libro-status" class="w-16 h-20 bg-slate-100 rounded-xl flex items-center justify-center text-slate-300">
+                                <i class="fas fa-book text-3xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 id="titulo-libro" class="font-black text-xl text-slate-800 leading-tight">Sin ejemplar seleccionado</h3>
+                                <p id="autor-libro" class="text-slate-400 text-sm italic mb-4">---</p>
+                                <div id="detalles-libro" class="grid grid-cols-2 gap-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5">
+                <div class="bg-slate-900 text-white p-10 rounded-[3rem] shadow-2xl sticky top-8">
+                    <h3 class="text-xs font-black text-sky-400 uppercase tracking-[0.3em] mb-8">Configuración de Salida</h3>
+                    
+                    <div class="space-y-8">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Sede / Sala de Lectura</label>
+                            <div class="relative">
+                                <i class="fas fa-location-dot absolute left-4 top-4 text-slate-500"></i>
+                                <input type="text" id="input-sala" list="salas-sugeridas"
+                                    class="w-full p-4 pl-12 bg-slate-800 border border-slate-700 rounded-2xl focus:ring-2 focus:ring-sky-500 outline-none text-white font-bold transition-all"
+                                    placeholder="Especifique ubicación">
+                            </div>
+                            <datalist id="salas-sugeridas">
+                                <option value="Biblioteca Central - UNDAC">
+                                <option value="Sala de Ciencias Puras">
+                                <option value="Pabellón de Ingeniería">
+                                <option value="Hemeroteca">
+                            </datalist>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Modalidad</label>
+                            <select id="select-modalidad" class="w-full p-4 bg-slate-800 border border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-white appearance-none cursor-pointer">
+                                <option value="Sala">📍 Uso en Sala (Ficha)</option>
+                                <option value="Domicilio">🏠 Préstamo a Domicilio</option>
+                                <option value="Consulta">📖 Consulta Rápida</option>
+                            </select>
+                        </div>
+
+                        <div class="pt-4">
+                            <button onclick="confirmarPrestamo()"
+                                class="w-full bg-sky-500 hover:bg-sky-400 text-white font-black py-6 rounded-[2rem] shadow-[0_15px_30px_rgba(14,165,233,0.3)] transition-all active:scale-95 flex justify-center items-center gap-4 text-lg group">
+                                <i class="fas fa-print group-hover:animate-bounce"></i>
+                                <span>PROCESAR VOUCHER</span>
+                            </button>
+                        </div>
+
+                        <div class="p-6 bg-slate-800/50 rounded-3xl border border-slate-700/50 text-center">
+                            <p class="text-[10px] text-slate-400 leading-relaxed uppercase tracking-tighter">
+                                Al procesar, el sistema marcará el libro como <b>No Disponible</b> y generará la ficha de pedido automática.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="seccion-impresion"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ url_for('static', filename='js/prestamos.js') }}"></script>
+</body>
+</html>

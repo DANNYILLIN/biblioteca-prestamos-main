@@ -1,0 +1,8 @@
+Flask
+pandas
+openpyxl
+pyodbc
+python-dotenv
+gunicorn==20.1.0
+google-generativeai
+pymssql==2.2.11

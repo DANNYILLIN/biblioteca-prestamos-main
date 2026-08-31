@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Préstamos - Biblioteca UNDAC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="bg-slate-100 h-screen flex flex-col font-sans">
+
+    <header class="bg-sky-950 text-white shadow-md shrink-0">
+        <div class="px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-sky-800 p-2 rounded-lg">
+                    <i class="ph ph-books text-2xl text-sky-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wider leading-tight">BIBLIOTECA UNDAC</h1>
+                    <p class="text-xs text-sky-400 font-medium uppercase tracking-widest">Módulo de Mostrador</p>
+                </div>
+            </div>
+            
+            <div class="text-sm font-medium text-slate-300 flex items-center gap-2">
+                <i class="ph ph-user-circle text-xl"></i>
+                <span>Bibliotecario en turno</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-6 md:p-8">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Biblioteca UNDAC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .progress-glow {
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] flex min-h-screen text-slate-900">
+
+    <aside class="w-80 bg-[#050a18] text-white p-8 shadow-2xl flex flex-col sticky top-0 h-screen">
+        <div class="mb-12">
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="bg-rose-500 p-2 rounded-xl shadow-lg shadow-rose-500/20">
+                    <i class="fas fa-book-open text-xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold tracking-tight italic">UNDAC <span class="text-sky-500">LIB</span></h2>
+            </div>
+            <p class="text-[10px] text-slate-500 uppercase tracking-[0.4em] font-black">Módulo Administrativo</p>
+        </div>
+
+        <nav class="flex-1 space-y-3">
+            <a href="/admin" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'carga' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-upload group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Carga Masiva</span>
+            </a>
+
+            <a href="/admin/inventario" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'inventario' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-boxes-stacked group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Inventario Total</span>
+            </a>
+
+            <a href="/admin/reportes" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'reportes' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-user-clock group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Préstamos Activos</span>
+            </a>
+
+            <a href="/admin/usuarios" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group {{ 'bg-rose-500/10 text-rose-500 border border-rose-500/20' if active_page == 'usuarios' else 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                <i class="fas fa-user-shield group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Gestión de Usuarios</span>
+            </a>
+
+            <a href="/prestamos" target="_blank" class="flex items-center space-x-4 p-4 mt-6 bg-sky-600 hover:bg-sky-500 text-white rounded-2xl transition-all shadow-lg shadow-sky-900/20 group">
+                <div class="w-8 h-8 flex items-center justify-center bg-white/20 rounded-lg">
+                    <i class="fas fa-barcode text-sm"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-black uppercase leading-none opacity-70">Atención</span>
+                    <span class="text-sm font-bold leading-tight">Módulo de Préstamos</span>
+                </div>
+                <i class="fas fa-external-link-alt text-[10px] ml-auto opacity-50 group-hover:opacity-100"></i>
+            </a>
+        </nav>
+
+        <div class="pt-8 border-t border-white/5">
+            <a href="/logout" class="flex items-center space-x-4 p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all text-sm font-black uppercase justify-center">
+                <i class="fas fa-power-off"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-12 overflow-y-auto">
+        <header class="flex justify-between items-start mb-12">
+            <div>
+                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Hola, {{ usuario }} 👋</h1>
+                <p class="text-slate-500 mt-2 text-lg">Sincronización masiva de catálogo - Biblioteca Central.</p>
+            </div>
+            <div class="flex items-center bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+                <div class="bg-emerald-100 text-emerald-600 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider">
+                    SQL Server: Conectado
+                </div>
+            </div>
+        </header>
+
+        <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 mb-10">
+            <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center">
+                <i class="fas fa-list-check mr-2 text-sky-500"></i> Estructura Requerida del Excel
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <span class="block text-[9px] font-bold text-slate-400 italic">Col 1</span>
+                    <span class="font-bold text-slate-700 text-xs">local</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <span class="block text-[9px] font-bold text-slate-400 italic">Col 2</span>
+                    <span class="font-bold text-slate-700 text-xs">conocim</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <span class="block text-[9px] font-bold text-slate-400 italic">Col 3</span>
+                    <span class="font-bold text-slate-700 text-xs">notin</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <span class="block text-[9px] font-bold text-slate-400 italic">Col 4</span>
+                    <span class="font-bold text-slate-700 text-xs">secuenc</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <span class="block text-[9px] font-bold text-slate-400 italic">Col 5</span>
+                    <span class="font-bold text-slate-700 text-xs">nombre</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <span class="block text-[9px] font-bold text-slate-400 italic">Col 6</span>
+                    <span class="font-bold text-slate-700 text-xs">autor</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <span class="block text-[9px] font-bold text-slate-400 italic">Col 7</span>
+                    <span class="font-bold text-slate-700 text-xs">tema</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <span class="block text-[9px] font-bold text-slate-400 italic">Col 8</span>
+                    <span class="font-bold text-slate-700 text-xs">materia</span>
+                </div>
+            </div>
+        </div>
+
+        <section class="max-w-5xl">
+            <div class="bg-white rounded-[3rem] shadow-xl border border-slate-200 overflow-hidden relative p-16">
+                
+                <div class="max-w-2xl mb-12">
+                    <h2 class="text-4xl font-black text-slate-900 mb-4">Actualizar Catálogo</h2>
+                    <p class="text-slate-500 text-lg leading-relaxed">
+                        Suba su archivo para insertar los libros. El campo <span class="font-bold text-sky-600">secuenc</span> se guardará como código de barras.
+                    </p>
+                </div>
+
+                <form id="uploadForm" action="/admin/libros/upload_excel" method="POST" enctype="multipart/form-data" class="space-y-10">
+                    <div class="relative group">
+                        <input type="file" name="file" accept=".xlsx, .xls" id="excel_input" 
+                               class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" 
+                               required onchange="updateFileName()">
+                        
+                        <div id="drop_visual" class="border-4 border-dashed border-slate-200 rounded-[2.5rem] p-20 text-center transition-all group-hover:border-sky-500 group-hover:bg-sky-50/50">
+                            <div class="w-24 h-24 bg-sky-100 rounded-[2rem] mx-auto flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                <i class="fas fa-file-arrow-up text-4xl text-sky-600"></i>
+                            </div>
+                            <h3 id="file_name" class="text-2xl font-extrabold text-slate-800">Seleccione su archivo Excel</h3>
+                            <p class="text-slate-400 mt-2 font-medium italic">Arrastre el archivo aquí o haga clic para buscar</p>
+                        </div>
+                    </div>
+
+                    <div id="loadingContainer" class="hidden space-y-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-bold text-sky-600 animate-pulse">Procesando y guardando en SQL Server...</span>
+                            <span id="percentText" class="text-sm font-black text-slate-400">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-5 overflow-hidden border border-slate-200 p-1">
+                            <div id="progressBar" class="bg-gradient-to-r from-sky-400 via-blue-500 to-emerald-400 h-full w-0 transition-all duration-300 ease-out rounded-full progress-glow"></div>
+                        </div>
+                        <p class="text-center text-xs text-slate-400">No cierre la ventana hasta que el proceso finalice.</p>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="w-full bg-slate-900 text-white py-7 rounded-[2rem] font-black text-xl hover:bg-sky-600 shadow-2xl transition-all flex items-center justify-center space-x-4 transform hover:-translate-y-1 active:scale-95">
+                        <i class="fas fa-bolt-lightning text-sky-400"></i>
+                        <span>INICIAR PROCESAMIENTO MASIVO</span>
+                    </button>
+                </form>
+
+                <div class="mt-20 pt-10 border-t border-slate-100">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6">Herramientas de Mantenimiento</p>
+                    <form action="/admin/libros/limpiar" method="POST" onsubmit="return confirm('¿ESTÁ SEGURO? Esta acción vaciará TODA la tabla de libros de forma permanente.');">
+                        <button type="submit" class="flex items-center space-x-3 text-red-400 hover:text-red-600 transition-colors group">
+                            <i class="fas fa-trash-can bg-red-50 p-3 rounded-xl group-hover:bg-red-100 transition-colors"></i>
+                            <span class="text-sm font-bold italic underline decoration-red-200 underline-offset-4 uppercase tracking-tighter">VACIAR BASE DE DATOS DE LIBROS (RESET TOTAL)</span>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <script>
+        function updateFileName() {
+            const input = document.getElementById('excel_input');
+            const label = document.getElementById('file_name');
+            const visual = document.getElementById('drop_visual');
+            
+            if (input.files.length > 0) {
+                label.innerText = "✅ Archivo seleccionado: " + input.files[0].name;
+                label.className = "text-xl font-black text-emerald-600";
+                visual.classList.add('border-emerald-500', 'bg-emerald-50/20');
+            }
+        }
+
+        // Animación de la barra de carga
+        document.getElementById('uploadForm').onsubmit = function() {
+            const btn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loadingContainer');
+            const bar = document.getElementById('progressBar');
+            const percent = document.getElementById('percentText');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> <span>SINCRONIZANDO...</span>';
+            loading.classList.remove('hidden');
+
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 96) {
+                    clearInterval(interval);
+                    percent.innerText = "Finalizando...";
+                } else {
+                    width += (Math.random() * 8); 
+                    if(width > 96) width = 96;
+                    bar.style.width = width + '%';
+                    percent.innerText = Math.round(width) + '%';
+                }
+            }, 400);
+        };
+    </script>
+</body>
+</html>
