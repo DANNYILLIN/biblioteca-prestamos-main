@@ -21,4 +21,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Iniciar la aplicación
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "app_prestamos:app"]
+CMD gunicorn --bind 0.0.0.0:$PORT app_prestamos:app
