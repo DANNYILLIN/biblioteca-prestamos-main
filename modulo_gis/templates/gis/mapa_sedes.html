@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor GIS - Sedes UNDAC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Librerías de Leaflet (OpenStreetMap) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        /* El mapa necesita una altura definida para mostrarse */
+        #mapa { height: calc(100vh - 70px); width: 100%; z-index: 1;}
+    </style>
+</head>
+<body class="bg-slate-100 flex flex-col h-screen overflow-hidden">
+    
+    <!-- Barra Superior -->
+    <header class="bg-[#050a18] text-white p-4 flex justify-between items-center shadow-lg z-10 relative">
+        <div class="flex items-center space-x-4">
+            <a href="/prestamos" class="text-slate-400 hover:text-white transition-colors">
+                <i class="fas fa-arrow-left"></i> Volver al Sistema
+            </a>
+            <div class="h-6 w-px bg-slate-700"></div>
+            <h1 class="text-lg font-black tracking-tight"><i class="fas fa-globe-americas text-sky-500 mr-2"></i>Módulo GIS UNDAC</h1>
+        </div>
+        <a href="/gis/api/sedes" target="_blank" class="bg-sky-600 hover:bg-sky-500 text-xs font-bold py-2 px-4 rounded-xl transition-all shadow-lg shadow-sky-900/20">
+            <i class="fas fa-code mr-1"></i> Ver Endpoint GeoJSON
+        </a>
+    </header>
+
+    <!-- Contenedor del Mapa -->
+    <div id="mapa"></div>
+
+    <script>
+        // 1. Inicializar el mapa centrado en Cerro de Pasco
+        const mapa = L.map('mapa').setView([-10.6865, -76.2558], 9);
+
+        // 2. Cargar las "baldosas" (tiles) gratuitas de OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | GIS Biblioteca'
+        }).addTo(mapa);
+
+        // 3. Consumir nuestra propia API de sedes
+        fetch('/gis/api/sedes')
+            .then(respuesta => respuesta.json())
+            .then(datosGeoJSON => {
+                
+                // 4. Dibujar los puntos en el mapa usando los datos de la API
+                L.geoJSON(datosGeoJSON, {
+                    onEachFeature: function (feature, layer) {
+                        const props = feature.properties;
+                        
+                        // Diseñar la ventana que sale al hacer clic (Popup)
+                        const contenidoPopup = `
+                            <div style="font-family: sans-serif; min-width: 200px;">
+                                <h3 style="margin: 0; color: #0284c7; font-size: 14px; font-weight: bold;">${props.nombre}</h3>
+                                <p style="margin: 2px 0 10px 0; font-size: 11px; color: #64748b;">${props.tipo.toUpperCase()}</p>
+                                
+                                <div style="background: #f1f5f9; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                    <p style="margin: 0; font-size: 12px;"><strong>Préstamos Activos:</strong> 
+                                        <span style="color: #10b981; font-weight: bold; font-size: 14px;">${props.prestamos_activos}</span>
+                                    </p>
+                                </div>
+                                <p style="margin: 10px 0 0 0; font-size: 10px; color: #94a3b8; font-family: monospace;">
+                                    ID Sede: ${props.codigo}
+                                </p>
+                            </div>
+                        `;
+                        layer.bindPopup(contenidoPopup);
+                    }
+                }).addTo(mapa);
+            })
+            .catch(error => console.error("Error al cargar el mapa GIS:", error));
+    </script>
+</body>
+</html>
