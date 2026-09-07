@@ -7,6 +7,8 @@ from io import BytesIO
 from db import get_db_connection
 import unicodedata
 
+from modulo_gis.routes_gis import gis_bp
+
 # Importación de tus módulos de consulta y rutas
 from routes.api_prestamos import api_prestamos_bp
 from utils.queries_auth import validar_usuario_db
@@ -26,6 +28,9 @@ app.secret_key = 'undac_biblioteca_2026_key_final'
 
 # Registro de la API (Búsqueda de DNI y Libros para el bibliotecario)
 app.register_blueprint(api_prestamos_bp)
+
+# Registro del Módulo GIS Independiente
+app.register_blueprint(gis_bp) 
 
 # =========================================================
 # RUTAS DE ACCESO (LOGIN / LOGOUT)
