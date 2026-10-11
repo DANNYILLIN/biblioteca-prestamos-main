@@ -9,6 +9,9 @@ import unicodedata
 
 from modulo_gis.routes_gis import gis_bp
 
+from routes_ml import ml_bp
+
+
 # Importación de tus módulos de consulta y rutas
 from routes.api_prestamos import api_prestamos_bp
 from utils.queries_auth import validar_usuario_db
@@ -31,6 +34,11 @@ app.register_blueprint(api_prestamos_bp)
 
 # Registro del Módulo GIS Independiente
 app.register_blueprint(gis_bp) 
+
+# ... otras configuraciones de tu app ...
+
+# Registrar las rutas de Machine Learning
+app.register_blueprint(ml_bp, url_prefix='/ml')
 
 # =========================================================
 # RUTAS DE ACCESO (LOGIN / LOGOUT)
