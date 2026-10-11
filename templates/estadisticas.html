@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas e IA - Biblioteca UNDAC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .progress-glow {
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+        }
+        .chart-container { position: relative; height: 250px; width: 100%; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] flex min-h-screen text-slate-900">
+
+    <!-- MENÚ LATERAL (SIDEBAR) -->
+    <aside class="w-80 bg-[#050a18] text-white p-8 shadow-2xl flex flex-col sticky top-0 h-screen">
+        <div class="mb-12">
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="bg-rose-500 p-2 rounded-xl shadow-lg shadow-rose-500/20">
+                    <i class="fas fa-book-open text-xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold tracking-tight italic">UNDAC <span class="text-sky-500">LIB</span></h2>
+            </div>
+            <p class="text-[10px] text-slate-500 uppercase tracking-[0.4em] font-black">Módulo Administrativo</p>
+        </div>
+
+        <nav class="flex-1 space-y-3">
+            <a href="/admin" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fas fa-upload group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Carga Masiva</span>
+            </a>
+
+            <a href="/admin/inventario" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fas fa-boxes-stacked group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Inventario Total</span>
+            </a>
+
+            <a href="/admin/reportes" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fas fa-user-clock group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Préstamos Activos</span>
+            </a>
+
+            <a href="/admin/usuarios" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fas fa-user-shield group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Gestión de Usuarios</span>
+            </a>
+
+            <!-- NUEVO BOTÓN DE ESTADÍSTICAS E IA (Marcado como activo) -->
+            <a href="/ml/estadisticas" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                <i class="fas fa-chart-pie text-rose-500"></i>
+                <span class="text-sm font-bold">Estadísticas e IA</span>
+            </a>
+
+            <a href="/prestamos" target="_blank" class="flex items-center space-x-4 p-4 mt-6 bg-sky-600 hover:bg-sky-500 text-white rounded-2xl transition-all shadow-lg shadow-sky-900/20 group">
+                <div class="w-8 h-8 flex items-center justify-center bg-white/20 rounded-lg">
+                    <i class="fas fa-barcode text-sm"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-black uppercase leading-none opacity-70">Atención</span>
+                    <span class="text-sm font-bold leading-tight">Módulo de Préstamos</span>
+                </div>
+                <i class="fas fa-external-link-alt text-[10px] ml-auto opacity-50 group-hover:opacity-100"></i>
+            </a>
+        </nav>
+
+        <div class="pt-8 border-t border-white/5">
+            <a href="/logout" class="flex items-center space-x-4 p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all text-sm font-black uppercase justify-center">
+                <i class="fas fa-power-off"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-1 p-12 overflow-y-auto w-full">
+        <header class="flex justify-between items-start mb-12">
+            <div>
+                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Análisis Inteligente </h1>
+                <p class="text-slate-500 mt-2 text-lg">Dashboard predictivo potenciado por Machine Learning.</p>
+            </div>
+            <div class="flex items-center bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+                <div class="bg-violet-100 text-violet-600 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center">
+                    <i class="fas fa-brain mr-2"></i> Modelo IA: En línea
+                </div>
+            </div>
+        </header>
+
+        <!-- Tarjetas de Métricas (KPIs) -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="bg-gradient-to-br from-sky-500 to-blue-600 rounded-[2rem] p-6 text-white shadow-lg shadow-blue-500/30 relative overflow-hidden">
+                <i class="fas fa-book absolute right-[-10px] bottom-[-20px] text-7xl opacity-20"></i>
+                <h6 class="text-blue-100 font-bold text-sm mb-1 uppercase tracking-wider">Histórico</h6>
+                <h2 class="text-4xl font-black">1,200</h2>
+            </div>
+            <div class="bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-[2rem] p-6 text-white shadow-lg shadow-emerald-500/30 relative overflow-hidden">
+                <i class="fas fa-clock absolute right-[-10px] bottom-[-20px] text-7xl opacity-20"></i>
+                <h6 class="text-emerald-100 font-bold text-sm mb-1 uppercase tracking-wider">Activos</h6>
+                <h2 class="text-4xl font-black">120</h2>
+            </div>
+            <div class="bg-gradient-to-br from-rose-500 to-rose-600 rounded-[2rem] p-6 text-white shadow-lg shadow-rose-500/30 relative overflow-hidden">
+                <i class="fas fa-triangle-exclamation absolute right-[-10px] bottom-[-20px] text-7xl opacity-20"></i>
+                <h6 class="text-rose-100 font-bold text-sm mb-1 uppercase tracking-wider">Morosidad</h6>
+                <h2 class="text-4xl font-black">30%</h2>
+            </div>
+            <div class="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-[2rem] p-6 text-white shadow-lg shadow-violet-500/30 relative overflow-hidden">
+                <i class="fas fa-bullseye absolute right-[-10px] bottom-[-20px] text-7xl opacity-20"></i>
+                <h6 class="text-violet-100 font-bold text-sm mb-1 uppercase tracking-wider">Precisión IA</h6>
+                <h2 class="text-4xl font-black">75.2%</h2>
+            </div>
+        </div>
+
+        <!-- Fila 1: Simulador IA y Estado General -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
+            
+            <!-- Simulador -->
+            <div class="lg:col-span-7 bg-white rounded-[2.5rem] border border-sky-100 shadow-xl shadow-sky-100/50 p-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-sky-50 rounded-bl-[100%] z-0"></div>
+                <h3 class="text-xl font-black text-slate-800 mb-2 relative z-10"><i class="fas fa-robot text-sky-500 mr-2"></i> Simulador de Riesgo (IA)</h3>
+                <p class="text-sm text-slate-500 mb-8 relative z-10">Evalúa la probabilidad de retraso antes de aprobar un préstamo.</p>
+                
+                <div class="grid grid-cols-2 gap-6 mb-6 relative z-10">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tipo de Usuario</label>
+                        <select id="tipoUsuario" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-3 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all font-semibold" onchange="toggleEscuela()">
+                            <option value="Alumno">Alumno</option>
+                            <option value="Docente">Docente</option>
+                            <option value="Personal">Personal Administrativo</option>
+                        </select>
+                    </div>
+                    <div id="divEscuela">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Escuela / Carrera</label>
+                        <select id="escuela" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-3 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all font-semibold">
+                            <option value="Agronomía">Agronomía</option>
+                            <option value="Ingeniería de Sistemas">Ingeniería de Sistemas</option>
+                            <option value="Ingeniería de Minas">Ingeniería de Minas</option>
+                            <option value="Enfermería">Enfermería</option>
+                            <option value="Odontología">Odontología</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6 mb-8 relative z-10">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Fecha Préstamo</label>
+                        <input type="date" id="fechaPrestamo" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-3 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Devolución Estimada</label>
+                        <input type="date" id="fechaDevolucion" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-3 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all font-semibold">
+                    </div>
+                </div>
+
+                <button onclick="predecirRiesgo()" id="btnIA" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg hover:bg-sky-600 shadow-xl shadow-slate-900/20 transition-all flex items-center justify-center space-x-3 transform hover:-translate-y-1 active:scale-95 relative z-10">
+                    <i class="fas fa-bolt-lightning text-sky-400"></i>
+                    <span>EVALUAR RIESGO CON IA</span>
+                </button>
+                
+                <div id="resultadoIA" class="mt-8 text-center hidden relative z-10 bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                    <h4 id="riesgoTexto" class="text-xl font-black text-slate-800 mb-3"></h4>
+                    <div class="w-full bg-slate-200 rounded-full h-4 overflow-hidden shadow-inner">
+                        <div id="barraRiesgo" class="h-full w-0 transition-all duration-1000 ease-out rounded-full progress-glow"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico Estado -->
+            <div class="lg:col-span-5 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+                <h5 class="text-lg font-black text-slate-800 text-center mb-6">Estado Global de Préstamos</h5>
+                <div class="chart-container"><canvas id="graficoEstado"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Fila 2: Meses y Días -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
+            <div class="lg:col-span-8 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+                <h5 class="text-lg font-black text-slate-800 mb-6">Tendencia de Préstamos Anual</h5>
+                <div class="chart-container"><canvas id="graficoMeses"></canvas></div>
+            </div>
+            <div class="lg:col-span-4 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+                <h5 class="text-lg font-black text-slate-800 mb-6">Demanda por Día</h5>
+                <div class="chart-container"><canvas id="graficoDias"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Fila 3: Escuelas y Tipos de Usuario -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-7 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+                <h5 class="text-lg font-black text-slate-800 mb-6">Préstamos por Escuela (Alumnos)</h5>
+                <div class="chart-container"><canvas id="graficoEscuelas"></canvas></div>
+            </div>
+            <div class="lg:col-span-5 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+                <h5 class="text-lg font-black text-slate-800 text-center mb-6">Distribución de Usuarios</h5>
+                <div class="chart-container"><canvas id="graficoUsuarios"></canvas></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Lógica del simulador
+        function toggleEscuela() {
+            const tipo = document.getElementById('tipoUsuario').value;
+            document.getElementById('divEscuela').style.display = (tipo === 'Alumno') ? 'block' : 'none';
+        }
+
+        async function predecirRiesgo() {
+            const fPrestamo = document.getElementById('fechaPrestamo').value;
+            const fDevolucion = document.getElementById('fechaDevolucion').value;
+            if (!fPrestamo || !fDevolucion) { alert("Por favor selecciona ambas fechas"); return; }
+
+            const btn = document.getElementById('btnIA');
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin text-sky-400"></i> <span>ANALIZANDO...</span>';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/ml/api/predecir_riesgo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        fecha_prestamo: fPrestamo, 
+                        fecha_estimada: fDevolucion,
+                        tipo_usuario: document.getElementById('tipoUsuario').value,
+                        escuela: document.getElementById('escuela').value
+                    })
+                });
+                const data = await response.json();
+                
+                const resultadoDiv = document.getElementById('resultadoIA');
+                resultadoDiv.classList.remove('hidden');
+                
+                const riesgoTexto = document.getElementById('riesgoTexto');
+                const barraRiesgo = document.getElementById('barraRiesgo');
+                
+                riesgoTexto.innerHTML = `Probabilidad de Morosidad: <span class="${data.riesgo_porcentaje > 50 ? 'text-rose-600' : (data.riesgo_porcentaje > 30 ? 'text-amber-500' : 'text-emerald-600')}">${data.riesgo_porcentaje}%</span>`;
+                
+                // Animación de la barra (Tailwind colors)
+                setTimeout(() => {
+                    barraRiesgo.style.width = `${data.riesgo_porcentaje}%`;
+                    if (data.riesgo_porcentaje > 50) barraRiesgo.className = 'h-full transition-all duration-1000 ease-out rounded-full progress-glow bg-rose-500';
+                    else if (data.riesgo_porcentaje > 30) barraRiesgo.className = 'h-full transition-all duration-1000 ease-out rounded-full progress-glow bg-amber-400';
+                    else barraRiesgo.className = 'h-full transition-all duration-1000 ease-out rounded-full progress-glow bg-emerald-500';
+                }, 100);
+                
+            } catch (e) {
+                alert("Error de conexión con el modelo predictivo.");
+            } finally {
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+            }
+        }
+
+        // --- RENDERIZADO DE GRÁFICOS (Datos de Demostración) ---
+        Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+        Chart.defaults.color = '#94a3b8'; // slate-400
+        Chart.defaults.maintainAspectRatio = false;
+
+        // 1. Estado (Doughnut)
+        new Chart(document.getElementById('graficoEstado').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Devueltos', 'Retrasados', 'Activos'],
+                datasets: [{ 
+                    data: [720, 360, 120], 
+                    backgroundColor: ['#10b981', '#f43f5e', '#f59e0b'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: { cutout: '75%', plugins: { legend: { position: 'bottom' } } }
+        });
+
+        // 2. Meses (Line)
+        new Chart(document.getElementById('graficoMeses').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                datasets: [{
+                    label: 'Préstamos Mensuales',
+                    data: [85, 92, 120, 110, 95, 80, 105, 115, 130, 90, 88, 90],
+                    borderColor: '#0ea5e9', // sky-500
+                    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#0ea5e9',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } } }
+        });
+
+        // 3. Días (Polar Area)
+        new Chart(document.getElementById('graficoDias').getContext('2d'), {
+            type: 'polarArea',
+            data: {
+                labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+                datasets: [{
+                    data: [210, 180, 195, 230, 250, 135],
+                    backgroundColor: [
+                        'rgba(244, 63, 94, 0.7)',  // rose
+                        'rgba(14, 165, 233, 0.7)', // sky
+                        'rgba(245, 158, 11, 0.7)', // amber
+                        'rgba(16, 185, 129, 0.7)', // emerald
+                        'rgba(139, 92, 246, 0.7)', // violet
+                        'rgba(249, 115, 22, 0.7)'  // orange
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: { plugins: { legend: { position: 'right' } } }
+        });
+
+        // 4. Escuelas (Barras Horizontales)
+        new Chart(document.getElementById('graficoEscuelas').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Agronomía', 'Sistemas', 'Minas', 'Enfermería', 'Odontología'],
+                datasets: [{
+                    label: 'Cantidad de Préstamos',
+                    data: [250, 310, 180, 150, 110],
+                    backgroundColor: ['#10b981', '#0ea5e9', '#8b5cf6', '#ec4899', '#f97316'],
+                    borderRadius: 8
+                }]
+            },
+            options: { 
+                indexAxis: 'y', 
+                plugins: { legend: { display: false } },
+                scales: { x: { grid: { borderDash: [5, 5] } }, y: { grid: { display: false } } }
+            }
+        });
+
+        // 5. Usuarios (Pie)
+        new Chart(document.getElementById('graficoUsuarios').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: ['Alumnos', 'Docentes', 'Personal'],
+                datasets: [{
+                    data: [840, 240, 120],
+                    backgroundColor: ['#8b5cf6', '#f97316', '#0ea5e9'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: { plugins: { legend: { position: 'bottom' } } }
+        });
+    </script>
+</body>
+</html>
