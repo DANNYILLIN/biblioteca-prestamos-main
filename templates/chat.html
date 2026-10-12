@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Multiagente - Biblioteca UNDAC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Personalizar el scrollbar del chat */
+        #chatMessages::-webkit-scrollbar { width: 6px; }
+        #chatMessages::-webkit-scrollbar-track { background: transparent; }
+        #chatMessages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        #chatMessages::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] flex h-screen overflow-hidden text-slate-900">
+
+    <!-- MENÚ LATERAL -->
+    <aside class="w-80 bg-[#050a18] text-white p-8 shadow-2xl flex flex-col h-full z-10">
+        <div class="mb-12">
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="bg-rose-500 p-2 rounded-xl shadow-lg shadow-rose-500/20">
+                    <i class="fas fa-book-open text-xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold tracking-tight italic">UNDAC <span class="text-sky-500">LIB</span></h2>
+            </div>
+            <p class="text-[10px] text-slate-500 uppercase tracking-[0.4em] font-black">Módulo Administrativo</p>
+        </div>
+
+        <nav class="flex-1 space-y-3 overflow-y-auto pr-2">
+            <a href="/admin" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fas fa-upload group-hover:text-rose-400"></i><span class="text-sm font-bold">Carga Masiva</span>
+            </a>
+            <a href="/admin/inventario" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fas fa-boxes-stacked group-hover:text-rose-400"></i><span class="text-sm font-bold">Inventario Total</span>
+            </a>
+            <a href="/admin/reportes" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fas fa-user-clock group-hover:text-rose-400"></i><span class="text-sm font-bold">Préstamos Activos</span>
+            </a>
+            <a href="/admin/usuarios" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fas fa-user-shield group-hover:text-rose-400"></i><span class="text-sm font-bold">Gestión de Usuarios</span>
+            </a>
+            <a href="/ml/estadisticas" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fas fa-chart-pie group-hover:text-rose-400"></i><span class="text-sm font-bold">Estadísticas e IA</span>
+            </a>
+            
+            <!-- BOTÓN ACTIVO: ASISTENTE IA -->
+            <a href="/ml/chat" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                <i class="fas fa-network-wired text-rose-500"></i><span class="text-sm font-bold">Asistente Multiagente</span>
+            </a>
+
+            <a href="/prestamos" target="_blank" class="flex items-center space-x-4 p-4 mt-6 bg-sky-600 hover:bg-sky-500 text-white rounded-2xl transition-all shadow-lg shadow-sky-900/20 group">
+                <div class="w-8 h-8 flex items-center justify-center bg-white/20 rounded-lg"><i class="fas fa-barcode text-sm"></i></div>
+                <div class="flex flex-col"><span class="text-[10px] font-black uppercase leading-none opacity-70">Atención</span><span class="text-sm font-bold leading-tight">Módulo Préstamos</span></div>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- ÁREA DEL CHAT -->
+    <main class="flex-1 p-8 flex flex-col h-full w-full relative">
+        <header class="mb-6 flex-shrink-0">
+            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight flex items-center">
+                Asistente Multiagente <i class="fas fa-robot text-sky-500 ml-4 text-3xl"></i>
+            </h1>
+            <p class="text-slate-500 mt-2 text-lg">Consulta estadísticas, riesgos y catálogo usando lenguaje natural.</p>
+        </header>
+
+        <!-- Contenedor del Chat (Ocupa el resto de la pantalla) -->
+        <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col flex-1 overflow-hidden relative">
+            
+            <!-- Historial de Mensajes -->
+            <div id="chatMessages" class="flex-1 p-8 overflow-y-auto bg-slate-50/50 space-y-6">
+                <!-- Mensaje de bienvenida del Coordinador -->
+                <div class="flex items-start space-x-4">
+                    <div class="bg-slate-800 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-md flex-shrink-0">
+                        <i class="fas fa-sitemap text-xl text-sky-400"></i>
+                    </div>
+                    <div class="bg-white p-5 rounded-3xl rounded-tl-none border border-slate-200 shadow-sm max-w-2xl">
+                        <span class="text-xs font-black tracking-widest text-slate-400 uppercase block mb-2">Agente Coordinador</span>
+                        <p class="text-slate-700 leading-relaxed">
+                            ¡Hola! Soy el sistema inteligente de la biblioteca. Puedo derivar tu consulta a dos especialistas: <br><br>
+                            👉 <b>Analista de Riesgos:</b> Pregúntame sobre probabilidad de morosidad, estadísticas o predicciones.<br>
+                            👉 <b>Bibliotecario:</b> Pregúntame sobre recomendaciones de libros, catálogo o autores.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Caja de Texto (Input) -->
+            <div class="p-6 bg-white border-t border-slate-100 flex-shrink-0">
+                <div class="flex items-center space-x-4 bg-slate-50 border border-slate-200 rounded-[2rem] p-2 pr-4 focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100 transition-all">
+                    <input type="text" id="chatInput" placeholder="Escribe tu consulta a los agentes aquí..." class="flex-1 bg-transparent border-none p-4 focus:outline-none text-slate-700 font-medium" onkeypress="if(event.key === 'Enter') enviarMensaje()">
+                    <button onclick="enviarMensaje()" class="bg-slate-900 text-white w-14 h-14 rounded-full hover:bg-sky-600 flex items-center justify-center transition-all shadow-lg shadow-slate-900/20 transform hover:-translate-y-1 active:scale-95">
+                        <i class="fas fa-paper-plane text-xl"></i>
+                    </button>
+                </div>
+                <p class="text-center text-xs text-slate-400 mt-4 font-medium italic">La IA de Gemini procesa la intención y elije al agente experto adecuado.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        async function enviarMensaje() {
+            const input = document.getElementById('chatInput');
+            const mensaje = input.value.trim();
+            if (!mensaje) return;
+
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // 1. Mostrar mensaje del Usuario (Alineado a la derecha)
+            chatMessages.innerHTML += `
+                <div class="flex items-start justify-end space-x-4">
+                    <div class="bg-sky-600 text-white p-5 rounded-3xl rounded-tr-none shadow-md max-w-2xl">
+                        <p class="leading-relaxed font-medium">${mensaje}</p>
+                    </div>
+                    <div class="bg-sky-100 text-sky-600 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0 border border-sky-200">
+                        <i class="fas fa-user text-xl"></i>
+                    </div>
+                </div>`;
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // 2. Mostrar indicador de "Pensando..." (Coordinador)
+            const typingId = 'typing-' + Date.now();
+            chatMessages.innerHTML += `
+                <div id="${typingId}" class="flex items-start space-x-4">
+                    <div class="bg-slate-800 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-md flex-shrink-0">
+                        <i class="fas fa-sitemap text-xl text-sky-400"></i>
+                    </div>
+                    <div class="bg-slate-50 p-5 rounded-3xl rounded-tl-none border border-slate-200 shadow-sm">
+                        <p class="text-slate-500 font-medium flex items-center">
+                            <i class="fas fa-circle-notch fa-spin text-sky-500 mr-3"></i> El Coordinador está derivando tu consulta...
+                        </p>
+                    </div>
+                </div>`;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                // 3. Llamada al Backend
+                const response = await fetch('/ml/api/chat_agentes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mensaje: mensaje })
+                });
+                const data = await response.json();
+                
+                // Remover el mensaje de "Pensando..."
+                document.getElementById(typingId).remove();
+                
+                // Determinar el ícono y color según el agente
+                let icon = data.agente.includes('Riesgos') ? 'fa-chart-line' : 'fa-book';
+                let colorClass = data.agente.includes('Riesgos') ? 'text-emerald-500' : 'text-violet-500';
+                
+                // 4. Mostrar la respuesta del Especialista (Alineado a la izquierda)
+                chatMessages.innerHTML += `
+                    <div class="flex items-start space-x-4 animate-[fadeIn_0.3s_ease-in-out]">
+                        <div class="bg-white border border-slate-200 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0">
+                            <i class="fas ${icon} text-xl ${colorClass}"></i>
+                        </div>
+                        <div class="bg-white p-5 rounded-3xl rounded-tl-none border border-slate-200 shadow-sm max-w-2xl">
+                            <span class="text-xs font-black tracking-widest ${colorClass} uppercase block mb-2">${data.agente}</span>
+                            <p class="text-slate-700 leading-relaxed whitespace-pre-wrap">${data.respuesta}</p>
+                        </div>
+                    </div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (e) {
+                document.getElementById(typingId).innerHTML = `<div class="bg-red-50 text-red-500 p-4 rounded-2xl"><i class="fas fa-triangle-exclamation mr-2"></i>Error de conexión con la IA.</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
