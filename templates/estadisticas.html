@@ -97,17 +97,17 @@
             <div class="bg-gradient-to-br from-sky-500 to-blue-600 rounded-[2rem] p-6 text-white shadow-lg shadow-blue-500/30 relative overflow-hidden">
                 <i class="fas fa-book absolute right-[-10px] bottom-[-20px] text-7xl opacity-20"></i>
                 <h6 class="text-blue-100 font-bold text-sm mb-1 uppercase tracking-wider">Histórico</h6>
-                <h2 class="text-4xl font-black">1,200</h2>
+                <h2 id="totalPrestamos" class="text-4xl font-black">...</h2>
             </div>
             <div class="bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-[2rem] p-6 text-white shadow-lg shadow-emerald-500/30 relative overflow-hidden">
                 <i class="fas fa-clock absolute right-[-10px] bottom-[-20px] text-7xl opacity-20"></i>
                 <h6 class="text-emerald-100 font-bold text-sm mb-1 uppercase tracking-wider">Activos</h6>
-                <h2 class="text-4xl font-black">120</h2>
+                <h2 id="totalActivos" class="text-4xl font-black">...</h2>
             </div>
             <div class="bg-gradient-to-br from-rose-500 to-rose-600 rounded-[2rem] p-6 text-white shadow-lg shadow-rose-500/30 relative overflow-hidden">
                 <i class="fas fa-triangle-exclamation absolute right-[-10px] bottom-[-20px] text-7xl opacity-20"></i>
                 <h6 class="text-rose-100 font-bold text-sm mb-1 uppercase tracking-wider">Morosidad</h6>
-                <h2 class="text-4xl font-black">30%</h2>
+                <h2 id="porcentajeMorosidad" class="text-4xl font-black">...</h2>
             </div>
             <div class="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-[2rem] p-6 text-white shadow-lg shadow-violet-500/30 relative overflow-hidden">
                 <i class="fas fa-bullseye absolute right-[-10px] bottom-[-20px] text-7xl opacity-20"></i>
@@ -200,6 +200,46 @@
                 <div class="chart-container"><canvas id="graficoUsuarios"></canvas></div>
             </div>
         </div>
+
+        <!-- Fila 4: Rankings Exactos (Top Libros y Alumnos) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10 mt-8">
+            <!-- Top Libros -->
+            <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+                <h5 class="text-lg font-black text-slate-800 mb-6 flex items-center"><i class="fas fa-book text-sky-500 mr-3"></i> Top 5 Libros Más Solicitados</h5>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-400">
+                                <th class="pb-3 font-bold">Título del Libro</th>
+                                <th class="pb-3 font-bold text-center">Préstamos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaTopLibros" class="text-sm text-slate-700 font-medium">
+                            <!-- Llenado dinámico por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Alumnos -->
+            <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+                <h5 class="text-lg font-black text-slate-800 mb-6 flex items-center"><i class="fas fa-user-graduate text-emerald-500 mr-3"></i> Top 5 Alumnos Más Activos</h5>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-400">
+                                <th class="pb-3 font-bold">Alumno</th>
+                                <th class="pb-3 font-bold">Escuela</th>
+                                <th class="pb-3 font-bold text-center">Préstamos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaTopAlumnos" class="text-sm text-slate-700 font-medium">
+                            <!-- Llenado dinámico por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -240,7 +280,7 @@
                 
                 riesgoTexto.innerHTML = `Probabilidad de Morosidad: <span class="${data.riesgo_porcentaje > 50 ? 'text-rose-600' : (data.riesgo_porcentaje > 30 ? 'text-amber-500' : 'text-emerald-600')}">${data.riesgo_porcentaje}%</span>`;
                 
-                // Animación de la barra (Tailwind colors)
+                // Animación de la barra
                 setTimeout(() => {
                     barraRiesgo.style.width = `${data.riesgo_porcentaje}%`;
                     if (data.riesgo_porcentaje > 50) barraRiesgo.className = 'h-full transition-all duration-1000 ease-out rounded-full progress-glow bg-rose-500';
@@ -256,101 +296,141 @@
             }
         }
 
-        // --- RENDERIZADO DE GRÁFICOS (Datos de Demostración) ---
+        // --- RENDERIZADO DINÁMICO DE TODOS LOS GRÁFICOS ---
         Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
         Chart.defaults.color = '#94a3b8'; // slate-400
         Chart.defaults.maintainAspectRatio = false;
 
-        // 1. Estado (Doughnut)
-        new Chart(document.getElementById('graficoEstado').getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Devueltos', 'Retrasados', 'Activos'],
-                datasets: [{ 
-                    data: [720, 360, 120], 
-                    backgroundColor: ['#10b981', '#f43f5e', '#f59e0b'],
-                    borderWidth: 0,
-                    hoverOffset: 10
-                }]
-            },
-            options: { cutout: '75%', plugins: { legend: { position: 'bottom' } } }
-        });
+        async function cargarGraficosReales() {
+            try {
+                // Obtenemos todos los cálculos matemáticos desde Flask
+                const respuesta = await fetch('/ml/api/datos_graficos');
+                const datos = await respuesta.json();
+                
+                // 1. ACTUALIZAR LAS TARJETAS (KPIs)
+                document.getElementById('totalPrestamos').innerText = datos.total_prestamos.toLocaleString();
+                document.getElementById('totalActivos').innerText = datos.estados[1].toLocaleString(); 
+                document.getElementById('porcentajeMorosidad').innerText = datos.porcentaje_morosidad + '%';
+                
+                // 2. Gráfico de Dona (Estado)
+                new Chart(document.getElementById('graficoEstado').getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Devueltos', 'Activos', 'Retrasados'],
+                        datasets: [{ 
+                            data: datos.estados,
+                            backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                            borderWidth: 0, hoverOffset: 10
+                        }]
+                    },
+                    options: { cutout: '75%', plugins: { legend: { position: 'bottom' } } }
+                });
 
-        // 2. Meses (Line)
-        new Chart(document.getElementById('graficoMeses').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-                datasets: [{
-                    label: 'Préstamos Mensuales',
-                    data: [85, 92, 120, 110, 95, 80, 105, 115, 130, 90, 88, 90],
-                    borderColor: '#0ea5e9', // sky-500
-                    backgroundColor: 'rgba(14, 165, 233, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#ffffff',
-                    pointBorderColor: '#0ea5e9',
-                    pointBorderWidth: 2,
-                    pointRadius: 4
-                }]
-            },
-            options: { scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } } }
-        });
+                // 3. Gráfico de Línea (Meses)
+                new Chart(document.getElementById('graficoMeses').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                        datasets: [{
+                            label: 'Préstamos Mensuales',
+                            data: datos.meses,
+                            borderColor: '#0ea5e9',
+                            backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                            borderWidth: 3, fill: true, tension: 0.4,
+                            pointBackgroundColor: '#ffffff', pointBorderColor: '#0ea5e9',
+                            pointBorderWidth: 2, pointRadius: 4
+                        }]
+                    },
+                    options: { scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } } }
+                });
 
-        // 3. Días (Polar Area)
-        new Chart(document.getElementById('graficoDias').getContext('2d'), {
-            type: 'polarArea',
-            data: {
-                labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
-                datasets: [{
-                    data: [210, 180, 195, 230, 250, 135],
-                    backgroundColor: [
-                        'rgba(244, 63, 94, 0.7)',  // rose
-                        'rgba(14, 165, 233, 0.7)', // sky
-                        'rgba(245, 158, 11, 0.7)', // amber
-                        'rgba(16, 185, 129, 0.7)', // emerald
-                        'rgba(139, 92, 246, 0.7)', // violet
-                        'rgba(249, 115, 22, 0.7)'  // orange
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: { plugins: { legend: { position: 'right' } } }
-        });
+                // 4. Gráfico Polar (Días de la semana)
+                new Chart(document.getElementById('graficoDias').getContext('2d'), {
+                    type: 'polarArea',
+                    data: {
+                        labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+                        datasets: [{
+                            data: datos.dias,
+                            backgroundColor: [
+                                'rgba(244, 63, 94, 0.7)', 'rgba(14, 165, 233, 0.7)', 'rgba(245, 158, 11, 0.7)',
+                                'rgba(16, 185, 129, 0.7)', 'rgba(139, 92, 246, 0.7)', 'rgba(249, 115, 22, 0.7)'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'right' } } }
+                });
 
-        // 4. Escuelas (Barras Horizontales)
-        new Chart(document.getElementById('graficoEscuelas').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: ['Agronomía', 'Sistemas', 'Minas', 'Enfermería', 'Odontología'],
-                datasets: [{
-                    label: 'Cantidad de Préstamos',
-                    data: [250, 310, 180, 150, 110],
-                    backgroundColor: ['#10b981', '#0ea5e9', '#8b5cf6', '#ec4899', '#f97316'],
-                    borderRadius: 8
-                }]
-            },
-            options: { 
-                indexAxis: 'y', 
-                plugins: { legend: { display: false } },
-                scales: { x: { grid: { borderDash: [5, 5] } }, y: { grid: { display: false } } }
+                // 5. Gráfico de Barras Horizontales (Escuelas)
+                new Chart(document.getElementById('graficoEscuelas').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: datos.escuelas_labels.length > 0 ? datos.escuelas_labels : ['Sin datos'],
+                        datasets: [{
+                            label: 'Préstamos por Escuela',
+                            data: datos.escuelas_data.length > 0 ? datos.escuelas_data : [0],
+                            backgroundColor: ['#10b981', '#0ea5e9', '#8b5cf6', '#ec4899', '#f97316', '#3b82f6', '#14b8a6'],
+                            borderRadius: 8
+                        }]
+                    },
+                    options: { 
+                        indexAxis: 'y', 
+                        plugins: { legend: { display: false } },
+                        scales: { x: { beginAtZero: true, grid: { borderDash: [5, 5] } }, y: { grid: { display: false } } }
+                    }
+                });
+
+                // 6. Gráfico de Pie (Distribución de Usuarios)
+                new Chart(document.getElementById('graficoUsuarios').getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['Alumnos', 'Docentes', 'Personal'],
+                        datasets: [{
+                            data: datos.usuarios,
+                            backgroundColor: ['#8b5cf6', '#f97316', '#0ea5e9'],
+                            borderWidth: 0, hoverOffset: 10
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+
+            } catch (error) {
+                console.error("Error cargando el dashboard masivo:", error);
             }
-        });
+        }
 
-        // 5. Usuarios (Pie)
-        new Chart(document.getElementById('graficoUsuarios').getContext('2d'), {
-            type: 'pie',
-            data: {
-                labels: ['Alumnos', 'Docentes', 'Personal'],
-                datasets: [{
-                    data: [840, 240, 120],
-                    backgroundColor: ['#8b5cf6', '#f97316', '#0ea5e9'],
-                    borderWidth: 0,
-                    hoverOffset: 10
-                }]
-            },
-            options: { plugins: { legend: { position: 'bottom' } } }
+        // --- CARGA DE LAS TABLAS INFERIORES TOP 5 ---
+        async function cargarTopEstadisticas() {
+            try {
+                const response = await fetch('/ml/api/top_estadisticas');
+                const data = await response.json();
+                
+                const tbodyLibros = document.getElementById('tablaTopLibros');
+                tbodyLibros.innerHTML = data.libros.map(l => `
+                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td class="py-3">${l.titulo}</td>
+                        <td class="py-3 text-center"><span class="bg-sky-100 text-sky-700 py-1 px-3 rounded-full font-bold">${l.total}</span></td>
+                    </tr>
+                `).join('');
+
+                const tbodyAlumnos = document.getElementById('tablaTopAlumnos');
+                tbodyAlumnos.innerHTML = data.alumnos.map(a => `
+                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td class="py-3 font-bold text-slate-800">${a.nombre}</td>
+                        <td class="py-3 text-slate-500">${a.escuela}</td>
+                        <td class="py-3 text-center"><span class="bg-emerald-100 text-emerald-700 py-1 px-3 rounded-full font-bold">${a.total}</span></td>
+                    </tr>
+                `).join('');
+                
+            } catch (error) {
+                console.error("Error cargando estadísticas exactas:", error);
+            }
+        }
+
+        // Ejecutar funciones al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarTopEstadisticas();
+            cargarGraficosReales(); // Carga las 5 gráficas y las tarjetas dinámicas
         });
     </script>
 </body>
