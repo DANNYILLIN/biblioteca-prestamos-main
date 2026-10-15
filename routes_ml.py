@@ -3,6 +3,7 @@ import joblib
 import pandas as pd
 from datetime import datetime
 import google.generativeai as genai
+from db import get_db_connection
 
 
 ml_bp = Blueprint('ml', __name__)
@@ -116,4 +117,119 @@ def chat_agentes():
         })
     except Exception as e:
         print(f"❌ ERROR DE GEMINI: {str(e)}") # Esto nos dirá exactamente qué falló
+        return jsonify({"error": str(e)}), 500
+
+
+@ml_bp.route('/api/top_estadisticas', methods=['GET'])
+def top_estadisticas():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Top 5 Libros más prestados
+        query_libros = """
+            SELECT TOP 5 L.Titulo, COUNT(P.PrestamoID) as Total
+            FROM Prestamos P
+            JOIN Libros L ON P.LibroID = L.LibroID
+            GROUP BY L.Titulo
+            ORDER BY Total DESC
+        """
+        cursor.execute(query_libros)
+        top_libros = [{"titulo": row.Titulo, "total": row.Total} for row in cursor.fetchall()]
+        
+        # Top 5 Alumnos con más préstamos
+        query_alumnos = """
+            SELECT TOP 5 A.NombreCompleto, A.Escuela, COUNT(P.PrestamoID) as Total
+            FROM Prestamos P
+            JOIN Alumnos A ON P.UsuarioDNI = A.DNI
+            GROUP BY A.NombreCompleto, A.Escuela
+            ORDER BY Total DESC
+        """
+        cursor.execute(query_alumnos)
+        top_alumnos = [{"nombre": row.NombreCompleto, "escuela": row.Escuela, "total": row.Total} for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return jsonify({
+            "libros": top_libros,
+            "alumnos": top_alumnos
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@ml_bp.route('/api/datos_graficos', methods=['GET'])
+def datos_graficos():
+    try:
+        from db import get_db_connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 1. ESTADOS (Dona) y KPI Morosidad
+        cursor.execute("SELECT EstadoPrestamo, COUNT(PrestamoID) as Total FROM Prestamos GROUP BY EstadoPrestamo")
+        estados_raw = {row.EstadoPrestamo: row.Total for row in cursor.fetchall()}
+        devueltos = estados_raw.get('Devuelto', 0)
+        activos = estados_raw.get('Activo', 0)
+        retrasados = estados_raw.get('Retrasado', 0)
+        total_prestamos = devueltos + activos + retrasados
+        
+        porcentaje_morosidad = 0
+        if total_prestamos > 0:
+            porcentaje_morosidad = round((retrasados / total_prestamos) * 100, 1)
+
+        # 2. MESES (Gráfico de Línea)
+        cursor.execute("SELECT MONTH(FechaPrestamo) as Mes, COUNT(PrestamoID) as Total FROM Prestamos GROUP BY MONTH(FechaPrestamo)")
+        meses_dict = {row.Mes: row.Total for row in cursor.fetchall()}
+        # Creamos un arreglo ordenado de Enero (1) a Diciembre (12)
+        meses_array = [meses_dict.get(i, 0) for i in range(1, 13)]
+
+        # 3. DÍAS DE LA SEMANA (Gráfico Polar)
+        # DATEPART(dw) devuelve 1=Domingo, 2=Lunes, 3=Martes... hasta 7=Sábado
+        cursor.execute("SELECT DATEPART(dw, FechaPrestamo) as Dia, COUNT(PrestamoID) as Total FROM Prestamos GROUP BY DATEPART(dw, FechaPrestamo)")
+        dias_dict = {row.Dia: row.Total for row in cursor.fetchall()}
+        dias_array = [
+            dias_dict.get(2, 0), # Lunes
+            dias_dict.get(3, 0), # Martes
+            dias_dict.get(4, 0), # Miércoles
+            dias_dict.get(5, 0), # Jueves
+            dias_dict.get(6, 0), # Viernes
+            dias_dict.get(7, 0)  # Sábado
+        ]
+
+        # 4. ESCUELAS (Gráfico de Barras Horizontales)
+        cursor.execute("""
+            SELECT A.Escuela, COUNT(P.PrestamoID) as Total 
+            FROM Prestamos P 
+            JOIN Alumnos A ON P.UsuarioDNI = A.DNI 
+            GROUP BY A.Escuela
+            ORDER BY Total DESC
+        """)
+        escuelas_raw = cursor.fetchall()
+        escuelas_labels = [row.Escuela for row in escuelas_raw]
+        escuelas_data = [row.Total for row in escuelas_raw]
+
+        # 5. TIPOS DE USUARIOS (Gráfico de Pie)
+        cursor.execute("""
+            SELECT 'Alumnos' as Tipo, COUNT(P.PrestamoID) as Total FROM Prestamos P JOIN Alumnos A ON P.UsuarioDNI = A.DNI
+            UNION ALL
+            SELECT 'Docentes' as Tipo, COUNT(P.PrestamoID) FROM Prestamos P JOIN Docentes D ON P.UsuarioDNI = D.DNI
+            UNION ALL
+            SELECT 'Personal' as Tipo, COUNT(P.PrestamoID) FROM Prestamos P JOIN PersonalAdministrativo PA ON P.UsuarioDNI = PA.DNI
+        """)
+        usuarios_raw = {row.Tipo: row.Total for row in cursor.fetchall()}
+        usuarios_array = [usuarios_raw.get('Alumnos', 0), usuarios_raw.get('Docentes', 0), usuarios_raw.get('Personal', 0)]
+
+        conn.close()
+        
+        # Enviamos absolutamente toda la información al Frontend
+        return jsonify({
+            "estados": [devueltos, activos, retrasados],
+            "total_prestamos": total_prestamos,
+            "porcentaje_morosidad": porcentaje_morosidad,
+            "meses": meses_array,
+            "dias": dias_array,
+            "escuelas_labels": escuelas_labels,
+            "escuelas_data": escuelas_data,
+            "usuarios": usuarios_array
+        })
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
