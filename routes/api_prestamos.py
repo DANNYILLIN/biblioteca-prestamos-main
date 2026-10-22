@@ -53,9 +53,11 @@ def generar_resena_ia():
         return jsonify({'success': False, 'error': 'Falta el título del libro'})
         
     try:
-        # Configurar la llave desde tu .env
-        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        # Usamos el modelo más rápido
+        # INYECTAMOS TU CLAVE NUEVA DIRECTAMENTE AQUÍ (Ignoramos el .env temporalmente)
+        CLAVE_NUEVA = "AQ.Ab8RN6I5429F2H6zWHlcqszTZzMK3k_fXa2mW3GoW5nOAssXrw"
+        genai.configure(api_key=CLAVE_NUEVA)
+        
+        # Usamos el modelo 3.6-flash que sabemos que tienes disponible
         model = genai.GenerativeModel('gemini-3.6-flash') 
         
         prompt = f"Actúa como un bibliotecario experto. Escribe una reseña muy breve (máximo 3 líneas) sobre el libro '{titulo}' de {autor}. Destaca de qué trata."
