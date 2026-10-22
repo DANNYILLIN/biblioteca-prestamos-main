@@ -8,3 +8,4 @@ google-generativeai
 pymssql==2.2.11
 scikit-learn
 joblib
+groq
