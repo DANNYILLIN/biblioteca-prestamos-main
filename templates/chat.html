@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistente Multiagente - Biblioteca UNDAC</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Chat Multi-Agente IA - Biblioteca UNDAC</title>
+    <!-- Plugin de typography añadido para que el Markdown luzca profesional -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Librería Marked.js añadida para traducir los asteriscos -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        /* Personalizar el scrollbar del chat */
-        #chatMessages::-webkit-scrollbar { width: 6px; }
-        #chatMessages::-webkit-scrollbar-track { background: transparent; }
-        #chatMessages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        #chatMessages::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Scrollbar personalizado para el chat */
+        #chatCaja::-webkit-scrollbar { width: 6px; }
+        #chatCaja::-webkit-scrollbar-track { background: transparent; }
+        #chatCaja::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-[#f8fafc] flex h-screen overflow-hidden text-slate-900">
+<body class="bg-[#f8fafc] flex min-h-screen text-slate-900">
 
     <!-- MENÚ LATERAL -->
-    <aside class="w-80 bg-[#050a18] text-white p-8 shadow-2xl flex flex-col h-full z-10">
+    <aside class="w-80 bg-[#050a18] text-white p-8 shadow-2xl flex flex-col sticky top-0 h-screen">
         <div class="mb-12">
             <div class="flex items-center space-x-3 mb-2">
                 <div class="bg-rose-500 p-2 rounded-xl shadow-lg shadow-rose-500/20">
@@ -31,144 +33,190 @@
             <p class="text-[10px] text-slate-500 uppercase tracking-[0.4em] font-black">Módulo Administrativo</p>
         </div>
 
-        <nav class="flex-1 space-y-3 overflow-y-auto pr-2">
-            <a href="/admin" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
-                <i class="fas fa-upload group-hover:text-rose-400"></i><span class="text-sm font-bold">Carga Masiva</span>
-            </a>
-            <a href="/admin/inventario" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
-                <i class="fas fa-boxes-stacked group-hover:text-rose-400"></i><span class="text-sm font-bold">Inventario Total</span>
-            </a>
-            <a href="/admin/reportes" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
-                <i class="fas fa-user-clock group-hover:text-rose-400"></i><span class="text-sm font-bold">Préstamos Activos</span>
-            </a>
-            <a href="/admin/usuarios" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
-                <i class="fas fa-user-shield group-hover:text-rose-400"></i><span class="text-sm font-bold">Gestión de Usuarios</span>
-            </a>
+        <nav class="flex-1 space-y-3">
             <a href="/ml/estadisticas" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group text-slate-400 hover:text-white hover:bg-white/5">
-                <i class="fas fa-chart-pie group-hover:text-rose-400"></i><span class="text-sm font-bold">Estadísticas e IA</span>
-            </a>
-            
-            <!-- BOTÓN ACTIVO: ASISTENTE IA -->
-            <a href="/ml/chat" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group bg-rose-500/10 text-rose-500 border border-rose-500/20">
-                <i class="fas fa-network-wired text-rose-500"></i><span class="text-sm font-bold">Asistente Multiagente</span>
+                <i class="fas fa-chart-pie group-hover:text-rose-400"></i>
+                <span class="text-sm font-bold">Estadísticas e IA</span>
             </a>
 
-            <a href="/prestamos" target="_blank" class="flex items-center space-x-4 p-4 mt-6 bg-sky-600 hover:bg-sky-500 text-white rounded-2xl transition-all shadow-lg shadow-sky-900/20 group">
-                <div class="w-8 h-8 flex items-center justify-center bg-white/20 rounded-lg"><i class="fas fa-barcode text-sm"></i></div>
-                <div class="flex flex-col"><span class="text-[10px] font-black uppercase leading-none opacity-70">Atención</span><span class="text-sm font-bold leading-tight">Módulo Préstamos</span></div>
+            <!-- BOTÓN DE CHAT (Activo) -->
+            <a href="/ml/chat" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                <i class="fas fa-comments text-rose-500"></i>
+                <span class="text-sm font-bold">Chat Multi-Agente</span>
+            </a>
+            
+            <a href="/admin" class="flex items-center space-x-4 p-4 mt-6 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-all shadow-lg group">
+                <i class="fas fa-arrow-left text-sm"></i>
+                <span class="text-sm font-bold leading-tight">Volver al Inicio</span>
             </a>
         </nav>
     </aside>
 
-    <!-- ÁREA DEL CHAT -->
-    <main class="flex-1 p-8 flex flex-col h-full w-full relative">
-        <header class="mb-6 flex-shrink-0">
-            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight flex items-center">
-                Asistente Multiagente <i class="fas fa-robot text-sky-500 ml-4 text-3xl"></i>
-            </h1>
-            <p class="text-slate-500 mt-2 text-lg">Consulta estadísticas, riesgos y catálogo usando lenguaje natural.</p>
-        </header>
-
-        <!-- Contenedor del Chat (Ocupa el resto de la pantalla) -->
-        <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col flex-1 overflow-hidden relative">
+    <!-- CONTENIDO PRINCIPAL: CHAT -->
+    <main class="flex-1 p-12 overflow-y-auto w-full flex flex-col items-center justify-center">
+        
+        <div class="w-full max-w-4xl bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden flex flex-col h-[85vh]">
             
-            <!-- Historial de Mensajes -->
-            <div id="chatMessages" class="flex-1 p-8 overflow-y-auto bg-slate-50/50 space-y-6">
-                <!-- Mensaje de bienvenida del Coordinador -->
-                <div class="flex items-start space-x-4">
-                    <div class="bg-slate-800 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-md flex-shrink-0">
-                        <i class="fas fa-sitemap text-xl text-sky-400"></i>
+            <!-- Cabecera Dinámica -->
+            <div id="cabeceraChat" class="bg-slate-900 p-6 flex items-center justify-between border-b border-slate-700 transition-colors duration-500">
+                <div class="flex items-center space-x-4 text-white">
+                    <div id="iconoFondo" class="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center shadow-lg transition-colors duration-500">
+                        <i id="iconoAgenteActivo" class="fas fa-network-wired text-2xl text-white"></i>
                     </div>
-                    <div class="bg-white p-5 rounded-3xl rounded-tl-none border border-slate-200 shadow-sm max-w-2xl">
-                        <span class="text-xs font-black tracking-widest text-slate-400 uppercase block mb-2">Agente Coordinador</span>
-                        <p class="text-slate-700 leading-relaxed">
-                            ¡Hola! Soy el sistema inteligente de la biblioteca. Puedo derivar tu consulta a dos especialistas: <br><br>
-                            👉 <b>Analista de Riesgos:</b> Pregúntame sobre probabilidad de morosidad, estadísticas o predicciones.<br>
-                            👉 <b>Bibliotecario:</b> Pregúntame sobre recomendaciones de libros, catálogo o autores.
-                        </p>
+                    <div>
+                        <h2 id="tituloAgenteActivo" class="text-xl font-black tracking-tight">Enrutador Automático</h2>
+                        <p id="subtituloAgenteActivo" class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Escribe tu consulta</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Caja de Texto (Input) -->
-            <div class="p-6 bg-white border-t border-slate-100 flex-shrink-0">
-                <div class="flex items-center space-x-4 bg-slate-50 border border-slate-200 rounded-[2rem] p-2 pr-4 focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100 transition-all">
-                    <input type="text" id="chatInput" placeholder="Escribe tu consulta a los agentes aquí..." class="flex-1 bg-transparent border-none p-4 focus:outline-none text-slate-700 font-medium" onkeypress="if(event.key === 'Enter') enviarMensaje()">
-                    <button onclick="enviarMensaje()" class="bg-slate-900 text-white w-14 h-14 rounded-full hover:bg-sky-600 flex items-center justify-center transition-all shadow-lg shadow-slate-900/20 transform hover:-translate-y-1 active:scale-95">
-                        <i class="fas fa-paper-plane text-xl"></i>
-                    </button>
+            <!-- Caja de Mensajes -->
+            <div id="chatCaja" class="flex-1 p-8 overflow-y-auto bg-slate-50 space-y-6">
+                <!-- Mensaje de bienvenida -->
+                <div class="flex items-start">
+                    <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center mr-4 shrink-0">
+                        <i class="fas fa-robot text-slate-600"></i>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 text-slate-700 max-w-[80%] text-sm leading-relaxed">
+                        ¡Hola! Hazme cualquier pregunta. Mi sistema detectará automáticamente si necesitas ayuda con el <b>Catálogo de Libros</b>, <b>Estadísticas de Riesgo</b>, <b>Asesoría Académica</b>, <b>Soporte Técnico</b> o <b>Novedades UNDAC</b>, y te conectaré con la IA adecuada.
+                    </div>
                 </div>
-                <p class="text-center text-xs text-slate-400 mt-4 font-medium italic">La IA de Gemini procesa la intención y elije al agente experto adecuado.</p>
+            </div>
+
+            <!-- Input de Texto -->
+            <div class="p-6 bg-white border-t border-slate-100">
+                <form id="formChat" onsubmit="enviarMensaje(event)" class="relative flex items-center">
+                    <input type="text" id="inputMensaje" autocomplete="off" placeholder="Escribe tu pregunta aquí..." required
+                        class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-2xl py-4 pl-6 pr-16 focus:outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 transition-all font-medium">
+                    
+                    <button type="submit" id="btnEnviar" class="absolute right-2 w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-slate-700 transition-colors shadow-md">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </main>
 
     <script>
-        async function enviarMensaje() {
-            const input = document.getElementById('chatInput');
-            const mensaje = input.value.trim();
-            if (!mensaje) return;
+        // Función para cambiar visualmente el chat según la IA que responda
+        function actualizarCabecera(agente, tema, iconoClase) {
+            const titulo = document.getElementById('tituloAgenteActivo');
+            const subtitulo = document.getElementById('subtituloAgenteActivo');
+            const icono = document.getElementById('iconoAgenteActivo');
+            const fondo = document.getElementById('iconoFondo');
 
-            const chatMessages = document.getElementById('chatMessages');
+            titulo.innerText = agente;
+            subtitulo.innerText = "IA: Gemini 1.5 Flash";
             
-            // 1. Mostrar mensaje del Usuario (Alineado a la derecha)
-            chatMessages.innerHTML += `
-                <div class="flex items-start justify-end space-x-4">
-                    <div class="bg-sky-600 text-white p-5 rounded-3xl rounded-tr-none shadow-md max-w-2xl">
-                        <p class="leading-relaxed font-medium">${mensaje}</p>
-                    </div>
-                    <div class="bg-sky-100 text-sky-600 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0 border border-sky-200">
-                        <i class="fas fa-user text-xl"></i>
-                    </div>
-                </div>`;
-            input.value = '';
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            // Actualizar ícono
+            if (iconoClase) {
+                icono.className = iconoClase + " text-2xl text-white transition-all duration-500";
+            }
 
-            // 2. Mostrar indicador de "Pensando..." (Coordinador)
-            const typingId = 'typing-' + Date.now();
-            chatMessages.innerHTML += `
-                <div id="${typingId}" class="flex items-start space-x-4">
-                    <div class="bg-slate-800 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-md flex-shrink-0">
-                        <i class="fas fa-sitemap text-xl text-sky-400"></i>
+            // Mapeo de colores para el fondo del ícono y el subtítulo
+            const coloresFondo = {
+                'rojo': 'bg-rose-500 shadow-rose-500/40',
+                'azul': 'bg-sky-500 shadow-sky-500/40',
+                'verde': 'bg-emerald-500 shadow-emerald-500/40',
+                'morado': 'bg-purple-500 shadow-purple-500/40',
+                'naranja': 'bg-orange-500 shadow-orange-500/40'
+            };
+            
+            const coloresTexto = {
+                'rojo': 'text-rose-200',
+                'azul': 'text-sky-200',
+                'verde': 'text-emerald-200',
+                'morado': 'text-purple-200',
+                'naranja': 'text-orange-200'
+            };
+
+            const fondoSeleccionado = coloresFondo[tema] || 'bg-slate-700 shadow-slate-500/40';
+            const textoSeleccionado = coloresTexto[tema] || 'text-slate-400';
+
+            fondo.className = `w-12 h-12 ${fondoSeleccionado} rounded-full flex items-center justify-center shadow-lg transition-colors duration-500`;
+            subtitulo.className = `text-xs font-semibold ${textoSeleccionado} uppercase tracking-widest`;
+        }
+
+        // Función para agregar burbujas de texto
+        function agregarMensaje(texto, remitente, tema = 'default') {
+            const caja = document.getElementById('chatCaja');
+            const div = document.createElement('div');
+            
+            if (remitente === 'usuario') {
+                div.className = "flex items-start justify-end";
+                div.innerHTML = `
+                    <div class="bg-slate-900 text-white p-4 rounded-2xl rounded-tr-none shadow-sm max-w-[80%] text-sm leading-relaxed">
+                        ${texto}
                     </div>
-                    <div class="bg-slate-50 p-5 rounded-3xl rounded-tl-none border border-slate-200 shadow-sm">
-                        <p class="text-slate-500 font-medium flex items-center">
-                            <i class="fas fa-circle-notch fa-spin text-sky-500 mr-3"></i> El Coordinador está derivando tu consulta...
-                        </p>
+                `;
+            } else {
+                // Mapeo de colores para el avatar del mensaje
+                const coloresAvatar = {
+                    'rojo': 'text-rose-600 bg-rose-100',
+                    'azul': 'text-sky-600 bg-sky-100',
+                    'verde': 'text-emerald-600 bg-emerald-100',
+                    'morado': 'text-purple-600 bg-purple-100',
+                    'naranja': 'text-orange-600 bg-orange-100',
+                    'default': 'text-slate-600 bg-slate-200'
+                };
+
+                let colorTema = coloresAvatar[tema] || coloresAvatar['default'];
+
+                div.className = "flex items-start";
+                // Aplicamos marked.parse() y las clases 'prose' para renderizar el formato
+                div.innerHTML = `
+                    <div class="w-10 h-10 rounded-full ${colorTema} flex items-center justify-center mr-4 shrink-0 transition-colors duration-500">
+                        <i class="fas fa-robot"></i>
                     </div>
-                </div>`;
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+                    <div class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-200 text-slate-700 max-w-[80%] text-sm leading-relaxed prose prose-sm prose-slate max-w-none">
+                        ${marked.parse(texto)}
+                    </div>
+                `;
+            }
+            caja.appendChild(div);
+            caja.scrollTop = caja.scrollHeight; // Bajar el scroll
+        }
+
+        // Enviar la petición al backend
+        async function enviarMensaje(e) {
+            e.preventDefault();
+            const input = document.getElementById('inputMensaje');
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            // 1. Mostrar mensaje del usuario
+            agregarMensaje(texto, 'usuario');
+            input.value = '';
+            
+            // Bloquear botón mientras carga
+            const btn = document.getElementById('btnEnviar');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
 
             try {
-                // 3. Llamada al Backend
-                const response = await fetch('/ml/api/chat_agentes', {
+                // 2. Enviar a la nueva ruta maestra automática
+                const respuesta = await fetch('/ml/api/chat_automatico', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mensaje: mensaje })
+                    body: JSON.stringify({ mensaje: texto })
                 });
-                const data = await response.json();
+
+                const data = await respuesta.json();
                 
-                // Remover el mensaje de "Pensando..."
-                document.getElementById(typingId).remove();
-                
-                // Determinar el ícono y color según el agente
-                let icon = data.agente.includes('Riesgos') ? 'fa-chart-line' : 'fa-book';
-                let colorClass = data.agente.includes('Riesgos') ? 'text-emerald-500' : 'text-violet-500';
-                
-                // 4. Mostrar la respuesta del Especialista (Alineado a la izquierda)
-                chatMessages.innerHTML += `
-                    <div class="flex items-start space-x-4 animate-[fadeIn_0.3s_ease-in-out]">
-                        <div class="bg-white border border-slate-200 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0">
-                            <i class="fas ${icon} text-xl ${colorClass}"></i>
-                        </div>
-                        <div class="bg-white p-5 rounded-3xl rounded-tl-none border border-slate-200 shadow-sm max-w-2xl">
-                            <span class="text-xs font-black tracking-widest ${colorClass} uppercase block mb-2">${data.agente}</span>
-                            <p class="text-slate-700 leading-relaxed whitespace-pre-wrap">${data.respuesta}</p>
-                        </div>
-                    </div>`;
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            } catch (e) {
-                document.getElementById(typingId).innerHTML = `<div class="bg-red-50 text-red-500 p-4 rounded-2xl"><i class="fas fa-triangle-exclamation mr-2"></i>Error de conexión con la IA.</div>`;
+                // 3. Mostrar la respuesta de la IA y cambiar cabecera
+                if (data.error) {
+                    agregarMensaje("❌ Error en el servidor: " + data.error, 'ia');
+                } else {
+                    actualizarCabecera(data.agente, data.tema, data.icono);
+                    agregarMensaje(data.respuesta, 'ia', data.tema);
+                }
+            } catch (error) {
+                agregarMensaje("❌ Error de conexión al hablar con el agente.", 'ia');
+            } finally {
+                // Restaurar botón
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                btn.disabled = false;
+                input.focus();
             }
         }
     </script>
