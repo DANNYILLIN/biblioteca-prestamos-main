@@ -52,7 +52,6 @@
                 <span class="text-sm font-bold">Gestión de Usuarios</span>
             </a>
 
-            <!-- NUEVO BOTÓN DE ESTADÍSTICAS E IA (Marcado como activo) -->
             <a href="/ml/estadisticas" class="flex items-center space-x-4 p-4 rounded-2xl transition-all group bg-rose-500/10 text-rose-500 border border-rose-500/20">
                 <i class="fas fa-chart-pie text-rose-500"></i>
                 <span class="text-sm font-bold">Estadísticas e IA</span>
@@ -112,37 +111,24 @@
             <div class="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-[2rem] p-6 text-white shadow-lg shadow-violet-500/30 relative overflow-hidden">
                 <i class="fas fa-bullseye absolute right-[-10px] bottom-[-20px] text-7xl opacity-20"></i>
                 <h6 class="text-violet-100 font-bold text-sm mb-1 uppercase tracking-wider">Precisión IA</h6>
-                <h2 class="text-4xl font-black">75.2%</h2>
+                <h2 class="text-4xl font-black">61.99%</h2>
             </div>
         </div>
 
         <!-- Fila 1: Simulador IA y Estado General -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
             
-            <!-- Simulador -->
+            <!-- Simulador Automático por Código con Prescripción -->
             <div class="lg:col-span-7 bg-white rounded-[2.5rem] border border-sky-100 shadow-xl shadow-sky-100/50 p-8 relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-sky-50 rounded-bl-[100%] z-0"></div>
-                <h3 class="text-xl font-black text-slate-800 mb-2 relative z-10"><i class="fas fa-robot text-sky-500 mr-2"></i> Simulador de Riesgo (IA)</h3>
-                <p class="text-sm text-slate-500 mb-8 relative z-10">Evalúa la probabilidad de retraso antes de aprobar un préstamo.</p>
+                <h3 class="text-xl font-black text-slate-800 mb-2 relative z-10"><i class="fas fa-robot text-sky-500 mr-2"></i> Motor de Analítica Prescriptiva</h3>
+                <p class="text-sm text-slate-500 mb-8 relative z-10">Ingresa los datos para evaluar el riesgo actual y recibir una recomendación de días seguros.</p>
                 
-                <div class="grid grid-cols-2 gap-6 mb-6 relative z-10">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tipo de Usuario</label>
-                        <select id="tipoUsuario" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-3 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all font-semibold" onchange="toggleEscuela()">
-                            <option value="Alumno">Alumno</option>
-                            <option value="Docente">Docente</option>
-                            <option value="Personal">Personal Administrativo</option>
-                        </select>
-                    </div>
-                    <div id="divEscuela">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Escuela / Carrera</label>
-                        <select id="escuela" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-3 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all font-semibold">
-                            <option value="Agronomía">Agronomía</option>
-                            <option value="Ingeniería de Sistemas">Ingeniería de Sistemas</option>
-                            <option value="Ingeniería de Minas">Ingeniería de Minas</option>
-                            <option value="Enfermería">Enfermería</option>
-                            <option value="Odontología">Odontología</option>
-                        </select>
+                <div class="mb-6 relative z-10">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Código del Lector</label>
+                    <div class="relative">
+                        <i class="fas fa-id-card absolute left-4 top-4 text-slate-400"></i>
+                        <input type="text" id="codigoUsuarioIA" placeholder="Ej. 19445..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all font-semibold">
                     </div>
                 </div>
 
@@ -152,20 +138,33 @@
                         <input type="date" id="fechaPrestamo" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-3 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all font-semibold">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Devolución Estimada</label>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Devolución Sugerida</label>
                         <input type="date" id="fechaDevolucion" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-3 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all font-semibold">
                     </div>
                 </div>
 
-                <button onclick="predecirRiesgo()" id="btnIA" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg hover:bg-sky-600 shadow-xl shadow-slate-900/20 transition-all flex items-center justify-center space-x-3 transform hover:-translate-y-1 active:scale-95 relative z-10">
+                <button onclick="predecirRiesgoAutomatico()" id="btnIA" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg hover:bg-sky-600 shadow-xl shadow-slate-900/20 transition-all flex items-center justify-center space-x-3 transform hover:-translate-y-1 active:scale-95 relative z-10">
                     <i class="fas fa-bolt-lightning text-sky-400"></i>
-                    <span>EVALUAR RIESGO CON IA</span>
+                    <span>EJECUTAR RED NEURONAL</span>
+                </button>
+
+                <!-- NUEVO BOTÓN PARA EL COMITÉ MULTIAGENTE -->
+                <button onclick="ejecutarComiteAgentes()" id="btnComite" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-emerald-500 shadow-xl shadow-emerald-900/20 transition-all flex items-center justify-center space-x-3 transform hover:-translate-y-1 active:scale-95 relative z-10 mt-4">
+                    <i class="fas fa-users-cog"></i>
+                    <span>EJECUTAR COMITÉ MULTIAGENTE (ENVIAR REPORTE)</span>
                 </button>
                 
                 <div id="resultadoIA" class="mt-8 text-center hidden relative z-10 bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                    <p id="datosLectorEncontrado" class="text-sm font-bold text-slate-500 mb-2"></p>
                     <h4 id="riesgoTexto" class="text-xl font-black text-slate-800 mb-3"></h4>
-                    <div class="w-full bg-slate-200 rounded-full h-4 overflow-hidden shadow-inner">
+                    <div class="w-full bg-slate-200 rounded-full h-4 overflow-hidden shadow-inner mb-4">
                         <div id="barraRiesgo" class="h-full w-0 transition-all duration-1000 ease-out rounded-full progress-glow"></div>
+                    </div>
+                    
+                    <!-- Panel de Analítica Prescriptiva -->
+                    <div id="recomendacionIA" class="mt-4 p-4 rounded-xl border-l-4 hidden text-left shadow-sm">
+                        <h5 class="font-bold text-sm uppercase tracking-wider mb-1"><i class="fas fa-lightbulb"></i> Analítica Prescriptiva</h5>
+                        <p id="textoRecomendacion" class="text-sm font-semibold"></p>
                     </div>
                 </div>
             </div>
@@ -201,9 +200,8 @@
             </div>
         </div>
 
-        <!-- Fila 4: Rankings Exactos (Top Libros y Alumnos) -->
+        <!-- Fila 4: Rankings Exactos -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10 mt-8">
-            <!-- Top Libros -->
             <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
                 <h5 class="text-lg font-black text-slate-800 mb-6 flex items-center"><i class="fas fa-book text-sky-500 mr-3"></i> Top 5 Libros Más Solicitados</h5>
                 <div class="overflow-x-auto">
@@ -214,14 +212,11 @@
                                 <th class="pb-3 font-bold text-center">Préstamos</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaTopLibros" class="text-sm text-slate-700 font-medium">
-                            <!-- Llenado dinámico por JS -->
-                        </tbody>
+                        <tbody id="tablaTopLibros" class="text-sm text-slate-700 font-medium"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Top Alumnos -->
             <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
                 <h5 class="text-lg font-black text-slate-800 mb-6 flex items-center"><i class="fas fa-user-graduate text-emerald-500 mr-3"></i> Top 5 Alumnos Más Activos</h5>
                 <div class="overflow-x-auto">
@@ -233,9 +228,7 @@
                                 <th class="pb-3 font-bold text-center">Préstamos</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaTopAlumnos" class="text-sm text-slate-700 font-medium">
-                            <!-- Llenado dinámico por JS -->
-                        </tbody>
+                        <tbody id="tablaTopAlumnos" class="text-sm text-slate-700 font-medium"></tbody>
                     </table>
                 </div>
             </div>
@@ -243,194 +236,201 @@
     </main>
 
     <script>
-        // Lógica del simulador
-        function toggleEscuela() {
-            const tipo = document.getElementById('tipoUsuario').value;
-            document.getElementById('divEscuela').style.display = (tipo === 'Alumno') ? 'block' : 'none';
-        }
-
-        async function predecirRiesgo() {
+        // Lógica del simulador Automático + Prescriptivo
+        async function predecirRiesgoAutomatico() {
+            const codigo = document.getElementById('codigoUsuarioIA').value.trim();
             const fPrestamo = document.getElementById('fechaPrestamo').value;
             const fDevolucion = document.getElementById('fechaDevolucion').value;
+            
+            if (!codigo) { alert("Por favor ingresa el código del lector"); return; }
             if (!fPrestamo || !fDevolucion) { alert("Por favor selecciona ambas fechas"); return; }
 
             const btn = document.getElementById('btnIA');
             const textoOriginal = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin text-sky-400"></i> <span>ANALIZANDO...</span>';
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin text-sky-400"></i> <span>PROCESANDO SIMULACIONES...</span>';
             btn.disabled = true;
             
             try {
+                // 1. Extraer datos del alumno
+                const resUsuario = await fetch('/api/buscar_usuario', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ codigo: codigo })
+                });
+                const dataUsuario = await resUsuario.json();
+
+                if (!dataUsuario.success) {
+                    alert("No se encontró el lector en la base de datos.");
+                    btn.innerHTML = textoOriginal;
+                    btn.disabled = false;
+                    return;
+                }
+
+                const usuario = dataUsuario.usuario;
+                
+                // --- CORRECCIÓN DEFINITIVA DE NOMBRES Y ESCUELAS ---
+                const nombreReal = usuario.NombreCompleto || usuario.nombrecompleto || 
+                                   usuario.ApellidosNombres || usuario.apellidosnombres || 
+                                   usuario.Nombres || usuario.nombres || 
+                                   usuario.Nombre || usuario.nombre || 
+                                   usuario.nombre_completo || 'Nombre no disponible';
+                                   
+                const escuelaReal = usuario.Escuela || usuario.escuela || usuario.Facultad || usuario.facultad || 'No Aplica';
+
+                // 2. Predicción Base (Analítica Predictiva) para las fechas solicitadas
                 const response = await fetch('/ml/api/predecir_riesgo', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         fecha_prestamo: fPrestamo, 
                         fecha_estimada: fDevolucion,
-                        tipo_usuario: document.getElementById('tipoUsuario').value,
-                        escuela: document.getElementById('escuela').value
+                        tipo_usuario: 'Alumno', 
+                        escuela: escuelaReal
                     })
                 });
                 const data = await response.json();
                 
+                // 3. Imprimir el riesgo base en pantalla
                 const resultadoDiv = document.getElementById('resultadoIA');
                 resultadoDiv.classList.remove('hidden');
+                
+                document.getElementById('datosLectorEncontrado').innerText = `Lector: ${nombreReal} | Escuela: ${escuelaReal}`;
                 
                 const riesgoTexto = document.getElementById('riesgoTexto');
                 const barraRiesgo = document.getElementById('barraRiesgo');
                 
-                riesgoTexto.innerHTML = `Probabilidad de Morosidad: <span class="${data.riesgo_porcentaje > 50 ? 'text-rose-600' : (data.riesgo_porcentaje > 30 ? 'text-amber-500' : 'text-emerald-600')}">${data.riesgo_porcentaje}%</span>`;
+                riesgoTexto.innerHTML = `Probabilidad de Morosidad (Fecha Solicitada): <span class="${data.riesgo_porcentaje > 50 ? 'text-rose-600' : (data.riesgo_porcentaje > 30 ? 'text-amber-500' : 'text-emerald-600')}">${data.riesgo_porcentaje}%</span>`;
                 
-                // Animación de la barra
                 setTimeout(() => {
                     barraRiesgo.style.width = `${data.riesgo_porcentaje}%`;
                     if (data.riesgo_porcentaje > 50) barraRiesgo.className = 'h-full transition-all duration-1000 ease-out rounded-full progress-glow bg-rose-500';
                     else if (data.riesgo_porcentaje > 30) barraRiesgo.className = 'h-full transition-all duration-1000 ease-out rounded-full progress-glow bg-amber-400';
                     else barraRiesgo.className = 'h-full transition-all duration-1000 ease-out rounded-full progress-glow bg-emerald-500';
                 }, 100);
+
+                // --- 4. ANALÍTICA PRESCRIPTIVA: Bucle para encontrar los "Días Seguros" ---
+                let diasSegurosRecomendados = 0;
+                let umbralPeligro = 40; // Consideramos riesgoso a partir del 40%
+
+                for(let dias = 1; dias <= 15; dias++) {
+                    let fechaSimulada = new Date(fPrestamo + 'T00:00:00');
+                    fechaSimulada.setDate(fechaSimulada.getDate() + dias);
+                    let fDevSimulada = fechaSimulada.toISOString().split('T')[0];
+
+                    const resSim = await fetch('/ml/api/predecir_riesgo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            fecha_prestamo: fPrestamo, 
+                            fecha_estimada: fDevSimulada,
+                            tipo_usuario: 'Alumno', 
+                            escuela: escuelaReal
+                        })
+                    });
+                    const dataSim = await resSim.json();
+                    
+                    if (dataSim.riesgo_porcentaje > umbralPeligro) {
+                        break; // Si el riesgo supera el 40%, detenemos el bucle
+                    }
+                    diasSegurosRecomendados = dias;
+                }
+
+                // 5. Imprimir la recomendación
+                const panelRecomendacion = document.getElementById('recomendacionIA');
+                const textoRecomendacion = document.getElementById('textoRecomendacion');
+                panelRecomendacion.classList.remove('hidden');
+
+                if (diasSegurosRecomendados === 0) {
+                    panelRecomendacion.className = 'mt-4 p-4 rounded-xl border-l-4 border-rose-500 bg-rose-50 text-rose-700 text-left shadow-sm';
+                    textoRecomendacion.innerHTML = `Este perfil representa un <b>Riesgo Crítico</b>. Se recomienda no aprobar el préstamo o exigir carnet físico en garantía.`;
+                } else if (data.riesgo_porcentaje > 50) {
+                    panelRecomendacion.className = 'mt-4 p-4 rounded-xl border-l-4 border-amber-500 bg-amber-50 text-amber-700 text-left shadow-sm';
+                    textoRecomendacion.innerHTML = `La fecha solicitada es muy riesgosa. El sistema sugiere reducir el préstamo a un <b>máximo de ${diasSegurosRecomendados} días</b> para mantener el nivel de riesgo bajo control.`;
+                } else {
+                    panelRecomendacion.className = 'mt-4 p-4 rounded-xl border-l-4 border-emerald-500 bg-emerald-50 text-emerald-700 text-left shadow-sm';
+                    textoRecomendacion.innerHTML = `El préstamo es seguro. Las políticas de la escuela permiten extender este préstamo hasta un <b>máximo de ${diasSegurosRecomendados} días</b> antes de entrar en zona de riesgo.`;
+                }
                 
             } catch (e) {
-                alert("Error de conexión con el modelo predictivo.");
+                alert("Error de conexión al ejecutar las simulaciones.");
             } finally {
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
             }
         }
 
-        // --- RENDERIZADO DINÁMICO DE TODOS LOS GRÁFICOS ---
+        // --- LÓGICA DEL BOTÓN COMITÉ MULTIAGENTE ---
+        async function ejecutarComiteAgentes() {
+            const btn = document.getElementById('btnComite');
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> <span>LOS AGENTES ESTÁN TRABAJANDO...</span>';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/ml/api/ejecutar_agentes', { method: 'POST' });
+                const data = await res.json();
+                
+                if(data.success) {
+                    alert("✅ ¡Éxito! El Agente Auditor acaba de enviar el reporte gerencial dictaminado por IA a tu correo.");
+                } else {
+                    alert("❌ Fallo en la auditoría multiagente: " + data.message);
+                }
+            } catch (e) {
+                alert("Error de conexión al orquestar los agentes. Asegúrate de tener el backend corriendo.");
+            } finally {
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+            }
+        }
+
+        // --- RENDERIZADO DINÁMICO DE GRÁFICOS ---
         Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-        Chart.defaults.color = '#94a3b8'; // slate-400
+        Chart.defaults.color = '#94a3b8'; 
         Chart.defaults.maintainAspectRatio = false;
+
+        let chartEstado = null, chartMeses = null, chartDias = null, chartEscuelas = null, chartUsuarios = null;
 
         async function cargarGraficosReales() {
             try {
-                // Obtenemos todos los cálculos matemáticos desde Flask
                 const respuesta = await fetch('/ml/api/datos_graficos');
                 const datos = await respuesta.json();
                 
-                // 1. ACTUALIZAR LAS TARJETAS (KPIs)
                 document.getElementById('totalPrestamos').innerText = datos.total_prestamos.toLocaleString();
                 document.getElementById('totalActivos').innerText = datos.estados[1].toLocaleString(); 
                 document.getElementById('porcentajeMorosidad').innerText = datos.porcentaje_morosidad + '%';
                 
-                // 2. Gráfico de Dona (Estado)
-                new Chart(document.getElementById('graficoEstado').getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Devueltos', 'Activos', 'Retrasados'],
-                        datasets: [{ 
-                            data: datos.estados,
-                            backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
-                            borderWidth: 0, hoverOffset: 10
-                        }]
-                    },
-                    options: { cutout: '75%', plugins: { legend: { position: 'bottom' } } }
-                });
+                if (chartEstado) { chartEstado.data.datasets[0].data = datos.estados; chartEstado.update(); } 
+                else { chartEstado = new Chart(document.getElementById('graficoEstado').getContext('2d'), { type: 'doughnut', data: { labels: ['Devueltos', 'Activos', 'Retrasados'], datasets: [{ data: datos.estados, backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'], borderWidth: 0, hoverOffset: 10 }] }, options: { cutout: '75%', plugins: { legend: { position: 'bottom' } }, animation: { duration: 800 } } }); }
 
-                // 3. Gráfico de Línea (Meses)
-                new Chart(document.getElementById('graficoMeses').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-                        datasets: [{
-                            label: 'Préstamos Mensuales',
-                            data: datos.meses,
-                            borderColor: '#0ea5e9',
-                            backgroundColor: 'rgba(14, 165, 233, 0.1)',
-                            borderWidth: 3, fill: true, tension: 0.4,
-                            pointBackgroundColor: '#ffffff', pointBorderColor: '#0ea5e9',
-                            pointBorderWidth: 2, pointRadius: 4
-                        }]
-                    },
-                    options: { scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } } }
-                });
+                if (chartMeses) { chartMeses.data.datasets[0].data = datos.meses; chartMeses.update(); } 
+                else { chartMeses = new Chart(document.getElementById('graficoMeses').getContext('2d'), { type: 'line', data: { labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'], datasets: [{ label: 'Préstamos Mensuales', data: datos.meses, borderColor: '#0ea5e9', backgroundColor: 'rgba(14, 165, 233, 0.1)', borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: '#ffffff', pointBorderColor: '#0ea5e9', pointBorderWidth: 2, pointRadius: 4 }] }, options: { scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } }, animation: { duration: 800 } } }); }
 
-                // 4. Gráfico Polar (Días de la semana)
-                new Chart(document.getElementById('graficoDias').getContext('2d'), {
-                    type: 'polarArea',
-                    data: {
-                        labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
-                        datasets: [{
-                            data: datos.dias,
-                            backgroundColor: [
-                                'rgba(244, 63, 94, 0.7)', 'rgba(14, 165, 233, 0.7)', 'rgba(245, 158, 11, 0.7)',
-                                'rgba(16, 185, 129, 0.7)', 'rgba(139, 92, 246, 0.7)', 'rgba(249, 115, 22, 0.7)'
-                            ],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: { plugins: { legend: { position: 'right' } } }
-                });
+                if (chartDias) { chartDias.data.datasets[0].data = datos.dias; chartDias.update(); } 
+                else { chartDias = new Chart(document.getElementById('graficoDias').getContext('2d'), { type: 'polarArea', data: { labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'], datasets: [{ data: datos.dias, backgroundColor: ['rgba(244, 63, 94, 0.7)', 'rgba(14, 165, 233, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(139, 92, 246, 0.7)', 'rgba(249, 115, 22, 0.7)'], borderWidth: 0 }] }, options: { plugins: { legend: { position: 'right' } }, animation: { duration: 800 } } }); }
 
-                // 5. Gráfico de Barras Horizontales (Escuelas)
-                new Chart(document.getElementById('graficoEscuelas').getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: datos.escuelas_labels.length > 0 ? datos.escuelas_labels : ['Sin datos'],
-                        datasets: [{
-                            label: 'Préstamos por Escuela',
-                            data: datos.escuelas_data.length > 0 ? datos.escuelas_data : [0],
-                            backgroundColor: ['#10b981', '#0ea5e9', '#8b5cf6', '#ec4899', '#f97316', '#3b82f6', '#14b8a6'],
-                            borderRadius: 8
-                        }]
-                    },
-                    options: { 
-                        indexAxis: 'y', 
-                        plugins: { legend: { display: false } },
-                        scales: { x: { beginAtZero: true, grid: { borderDash: [5, 5] } }, y: { grid: { display: false } } }
-                    }
-                });
+                if (chartEscuelas) { chartEscuelas.data.labels = datos.escuelas_labels.length > 0 ? datos.escuelas_labels : ['Sin datos']; chartEscuelas.data.datasets[0].data = datos.escuelas_data.length > 0 ? datos.escuelas_data : [0]; chartEscuelas.update(); } 
+                else { chartEscuelas = new Chart(document.getElementById('graficoEscuelas').getContext('2d'), { type: 'bar', data: { labels: datos.escuelas_labels.length > 0 ? datos.escuelas_labels : ['Sin datos'], datasets: [{ label: 'Préstamos por Escuela', data: datos.escuelas_data.length > 0 ? datos.escuelas_data : [0], backgroundColor: ['#10b981', '#0ea5e9', '#8b5cf6', '#ec4899', '#f97316', '#3b82f6', '#14b8a6'], borderRadius: 8 }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { borderDash: [5, 5] } }, y: { grid: { display: false } } }, animation: { duration: 800 } } }); }
 
-                // 6. Gráfico de Pie (Distribución de Usuarios)
-                new Chart(document.getElementById('graficoUsuarios').getContext('2d'), {
-                    type: 'pie',
-                    data: {
-                        labels: ['Alumnos', 'Docentes', 'Personal'],
-                        datasets: [{
-                            data: datos.usuarios,
-                            backgroundColor: ['#8b5cf6', '#f97316', '#0ea5e9'],
-                            borderWidth: 0, hoverOffset: 10
-                        }]
-                    },
-                    options: { plugins: { legend: { position: 'bottom' } } }
-                });
+                if (chartUsuarios) { chartUsuarios.data.datasets[0].data = datos.usuarios; chartUsuarios.update(); } 
+                else { chartUsuarios = new Chart(document.getElementById('graficoUsuarios').getContext('2d'), { type: 'pie', data: { labels: ['Alumnos', 'Docentes', 'Personal'], datasets: [{ data: datos.usuarios, backgroundColor: ['#8b5cf6', '#f97316', '#0ea5e9'], borderWidth: 0, hoverOffset: 10 }] }, options: { plugins: { legend: { position: 'bottom' } }, animation: { duration: 800 } } }); }
 
-            } catch (error) {
-                console.error("Error cargando el dashboard masivo:", error);
-            }
+            } catch (error) { console.error("Error:", error); }
         }
 
-        // --- CARGA DE LAS TABLAS INFERIORES TOP 5 ---
         async function cargarTopEstadisticas() {
             try {
                 const response = await fetch('/ml/api/top_estadisticas');
                 const data = await response.json();
-                
-                const tbodyLibros = document.getElementById('tablaTopLibros');
-                tbodyLibros.innerHTML = data.libros.map(l => `
-                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                        <td class="py-3">${l.titulo}</td>
-                        <td class="py-3 text-center"><span class="bg-sky-100 text-sky-700 py-1 px-3 rounded-full font-bold">${l.total}</span></td>
-                    </tr>
-                `).join('');
-
-                const tbodyAlumnos = document.getElementById('tablaTopAlumnos');
-                tbodyAlumnos.innerHTML = data.alumnos.map(a => `
-                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                        <td class="py-3 font-bold text-slate-800">${a.nombre}</td>
-                        <td class="py-3 text-slate-500">${a.escuela}</td>
-                        <td class="py-3 text-center"><span class="bg-emerald-100 text-emerald-700 py-1 px-3 rounded-full font-bold">${a.total}</span></td>
-                    </tr>
-                `).join('');
-                
-            } catch (error) {
-                console.error("Error cargando estadísticas exactas:", error);
-            }
+                document.getElementById('tablaTopLibros').innerHTML = data.libros.map(l => `<tr class="border-b border-slate-50 hover:bg-slate-50"><td class="py-3">${l.titulo}</td><td class="py-3 text-center"><span class="bg-sky-100 text-sky-700 py-1 px-3 rounded-full font-bold">${l.total}</span></td></tr>`).join('');
+                document.getElementById('tablaTopAlumnos').innerHTML = data.alumnos.map(a => `<tr class="border-b border-slate-50 hover:bg-slate-50"><td class="py-3 font-bold text-slate-800">${a.nombre}</td><td class="py-3 text-slate-500">${a.escuela}</td><td class="py-3 text-center"><span class="bg-emerald-100 text-emerald-700 py-1 px-3 rounded-full font-bold">${a.total}</span></td></tr>`).join('');
+            } catch (error) { console.error("Error:", error); }
         }
 
-        // Ejecutar funciones al cargar la página
         document.addEventListener('DOMContentLoaded', () => {
             cargarTopEstadisticas();
-            cargarGraficosReales(); // Carga las 5 gráficas y las tarjetas dinámicas
+            cargarGraficosReales(); 
+            setInterval(cargarGraficosReales, 5000);
+            setInterval(cargarTopEstadisticas, 5000);
         });
     </script>
 </body>
