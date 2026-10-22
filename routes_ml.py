@@ -2,23 +2,48 @@ from flask import Blueprint, render_template, request, jsonify
 import joblib
 import pandas as pd
 from datetime import datetime
-import google.generativeai as genai
+import os 
+import requests 
 from db import get_db_connection
-
+from agentes import Orquestador
 
 ml_bp = Blueprint('ml', __name__)
 
+GEMINI_API_KEY = "AQ.Ab8RN6I5429F2H6zWHlcqszTZzMK3k_fXa2mW3GoW5nOAssXrw"
 
-# ¡Asegúrate de pegar tu API Key de Gemini aquí!
-genai.configure(api_key="AQ.Ab8RN6J6iNMXfaF8-T54hsnPB9yaUICr-NElmovK8d8qo0kJYw")
+def llamar_ia_directo(prompt_texto):
+    """Función maestra con enrutamiento de contingencia Multi-Modelo"""
+    payload = {"contents": [{"parts": [{"text": prompt_texto}]}]}
+    headers = {"Content-Type": "application/json"}
+    
+    # 1. Intento principal con gemini-3.6-flash
+    url_principal = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}"
+    respuesta = requests.post(url_principal, json=payload, headers=headers)
+    datos = respuesta.json()
+    
+    # Si hay un error, aplicamos Tolerancia a Fallos
+    if "error" in datos:
+        error_msg = datos['error']['message'].lower()
+        if "high demand" in error_msg or "quota" in error_msg or "429" in error_msg or "overloaded" in error_msg:
+            print("⚠️ [API] gemini-3.6-flash saturado. Enrutando a gemini-flash-lite-latest...")
+            # 2. PLAN B: Modelo de contingencia ligero
+            url_respaldo = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key={GEMINI_API_KEY}"
+            respuesta_b = requests.post(url_respaldo, json=payload, headers=headers)
+            datos_b = respuesta_b.json()
+            
+            if "error" in datos_b:
+                raise Exception(f"Saturación total en Google: {datos_b['error']['message']}")
+            return datos_b["candidates"][0]["content"]["parts"][0]["text"]
+        else:
+            raise Exception(f"Error de Google: {datos['error']['message']}")
+            
+    return datos["candidates"][0]["content"]["parts"][0]["text"]
 
-modelo_llm = genai.GenerativeModel('gemini-3.6-flash')
 
 # --- 1. RUTA PARA MOSTRAR LA PÁGINA WEB DEL CHAT ---
 @ml_bp.route('/chat')
 def pagina_chat():
     return render_template('chat.html')
-
 
 # Cargar el modelo IA y la estructura exacta de las columnas que aprendió
 modelo_ia = joblib.load('modelo_morosidad.joblib')
@@ -35,21 +60,16 @@ def predecir_riesgo():
         fecha_prestamo = datetime.strptime(datos['fecha_prestamo'], '%Y-%m-%d')
         fecha_estimada = datetime.strptime(datos['fecha_estimada'], '%Y-%m-%d')
         
-        # 1. Crear un diccionario con todas las columnas en 0 por defecto
         entrada_dict = {col: 0 for col in columnas_entrenamiento}
-        
-        # 2. Asignar las fechas
         entrada_dict['DiasSolicitados'] = (fecha_estimada - fecha_prestamo).days
         entrada_dict['DiaSemana'] = fecha_prestamo.weekday()
         entrada_dict['Mes'] = fecha_prestamo.month
         
-        # 3. Asignar Tipo de Usuario (Si es Alumno, Personal o Docente)
         tipo = datos.get('tipo_usuario', 'Alumno')
         col_tipo = f'TipoUsuario_{tipo}'
         if col_tipo in entrada_dict:
             entrada_dict[col_tipo] = 1
             
-        # 4. Asignar Escuela (Solo si es alumno, sino 'No Aplica')
         if tipo == 'Alumno':
             escuela = datos.get('escuela', 'Agronomía')
             col_escuela = f'Escuela_{escuela}'
@@ -59,10 +79,7 @@ def predecir_riesgo():
             if 'Escuela_No Aplica' in entrada_dict:
                 entrada_dict['Escuela_No Aplica'] = 1
                 
-        # Convertir a formato Pandas para la IA
         entrada_df = pd.DataFrame([entrada_dict])
-        
-        # Obtener predicción
         probabilidad = modelo_ia.predict_proba(entrada_df)[0][1]
         
         return jsonify({
@@ -72,53 +89,99 @@ def predecir_riesgo():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-# --- 2. API DEL MULTIAGENTE ---
-@ml_bp.route('/api/chat_agentes', methods=['POST'])
-def chat_agentes():
-    datos = request.json
-    mensaje_usuario = datos.get('mensaje', '')
-    
-    try:
-        # AGENTE 1: Coordinador (Clasifica la intención)
-        prompt_coordinador = f"""
-        Eres el Coordinador del sistema multiagente de una biblioteca universitaria. 
-        Lee el mensaje del usuario y clasifícalo en una de estas dos áreas:
-        - Escribe 'RIESGO' si el usuario pregunta sobre morosidad, estadísticas, carreras, comportamiento de los alumnos, o predicciones de retraso.
-        - Escribe 'CATALOGO' si el usuario pregunta sobre libros, autores, resúmenes, inventario o temáticas de lectura.
-        
-        Mensaje del usuario: "{mensaje_usuario}"
-        Responde ÚNICAMENTE con una palabra: RIESGO o CATALOGO.
-        """
-        clasificacion = modelo_llm.generate_content(prompt_coordinador).text.strip().upper()
-        
-        # AGENTE 2: El Especialista (Responde basado en la clasificación)
-        if "RIESGO" in clasificacion:
-            nombre_agente = "Agente Analista de Riesgos"
-            prompt_especialista = f"""
-            Eres el Analista de Riesgos de la Biblioteca UNDAC. Conoces el modelo Random Forest que predice la morosidad de los préstamos.
-            Responde la siguiente consulta de manera profesional, técnica y amable. Si es relevante, menciona que nuestra IA evalúa la Escuela/Carrera y el Tipo de Usuario (Alumno, Docente, Personal) para calcular los riesgos.
-            
-            Consulta: "{mensaje_usuario}"
-            """
-        else:
-            nombre_agente = "Agente Bibliotecario"
-            prompt_especialista = f"""
-            Eres el Bibliotecario Jefe de la Biblioteca UNDAC. Eres un experto en literatura y material académico.
-            Responde la siguiente consulta recomendando libros, autores o explicando el funcionamiento del catálogo de manera muy amable e ilustrada.
-            
-            Consulta: "{mensaje_usuario}"
-            """
-            
-        respuesta_final = modelo_llm.generate_content(prompt_especialista).text
-        
-        return jsonify({
-            "agente": nombre_agente,
-            "respuesta": respuesta_final
-        })
-    except Exception as e:
-        print(f"❌ ERROR DE GEMINI: {str(e)}") # Esto nos dirá exactamente qué falló
-        return jsonify({"error": str(e)}), 500
 
+# ---------------------------------------------------------
+# SISTEMA MULTIAGENTE: ORQUESTADOR + 5 AGENTES (CON GEMINI)
+# ---------------------------------------------------------
+@ml_bp.route('/api/chat_automatico', methods=['POST'])
+def chat_automatico():
+    try:
+        datos = request.json
+        pregunta_usuario = datos.get('mensaje', '')
+
+        # 1. EL ORQUESTADOR DECIDE ENTRE 5 ÁREAS
+        prompt_coordinador = f"""
+        Eres el Coordinador del sistema multiagente de la biblioteca UNDAC.
+        Clasifica el mensaje en una de estas 5 áreas:
+        - 'CATALOGO' (sobre libros, autores, recomendaciones)
+        - 'RIESGO' (sobre morosidad, estadísticas, devoluciones, deudas)
+        - 'ACADEMICO' (sobre investigación, tesis, estudio por facultades)
+        - 'SOPORTE' (sobre reglas, horarios, cómo usar el sistema, ayuda)
+        - 'NOVEDADES' (sobre noticias, eventos, comunicados de la universidad)
+        Mensaje: "{pregunta_usuario}"
+        Responde ÚNICAMENTE con una palabra de la lista.
+        """
+        clasificacion = llamar_ia_directo(prompt_coordinador).strip().upper()
+
+        # 2. ENRUTAMIENTO A LOS 5 AGENTES
+        if "RIESGO" in clasificacion:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT EstadoPrestamo, COUNT(PrestamoID) as Total FROM Prestamos GROUP BY EstadoPrestamo")
+            estados = {row.EstadoPrestamo: row.Total for row in cursor.fetchall()}
+            conn.close()
+            retrasados = estados.get('Retrasado', 0)
+            activos = estados.get('Activo', 0)
+            devueltos = estados.get('Devuelto', 0)
+
+            prompt = f"Eres el Analista de Riesgos de la UNDAC. Datos reales: {devueltos} devueltos, {activos} activos, {retrasados} con retraso. Responde la duda basándote en estos números con un tono profesional a esta pregunta: {pregunta_usuario}"
+            agente_nombre = "Analista de Riesgos"
+            tema_color = "azul"
+            icono_clase = "fas fa-chart-line"
+
+        elif "ACADEMICO" in clasificacion:
+            prompt = f"Eres el Asesor Académico de la Biblioteca UNDAC. Ayudas a los estudiantes con consejos de investigación, redacción de tesis y recursos de estudio para sus escuelas (ej. Sistemas, Agronomía). Responde a la pregunta de forma académica y motivadora: {pregunta_usuario}"
+            agente_nombre = "Asesor Académico"
+            tema_color = "verde"
+            icono_clase = "fas fa-user-graduate"
+
+        elif "SOPORTE" in clasificacion:
+            prompt = f"Eres el Agente de Soporte Técnico de la Biblioteca UNDAC. Ayudas con el uso de la plataforma web, consultas sobre horarios (L-V 8am a 6pm), reglas y multas. Responde de forma clara, paciente y servicial a esta duda: {pregunta_usuario}"
+            agente_nombre = "Soporte Técnico"
+            tema_color = "morado"
+            icono_clase = "fas fa-headset"
+
+        elif "NOVEDADES" in clasificacion:
+            prompt = f"Eres el Agente de Novedades de la UNDAC. Informas sobre eventos culturales, ingresos de nuevos libros, y noticias de la universidad. Sé entusiasta y comunicativo al responder esto: {pregunta_usuario}"
+            agente_nombre = "Agente de Novedades"
+            tema_color = "naranja"
+            icono_clase = "fas fa-bullhorn"
+
+        else: # CATALOGO por defecto
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT TOP 5 Titulo, COUNT(PrestamoID) as VecesPrestado FROM Prestamos JOIN Libros ON Prestamos.LibroID = Libros.LibroID GROUP BY Titulo ORDER BY VecesPrestado DESC")
+            top_libros = cursor.fetchall()
+            conn.close()
+            contexto_libros = ", ".join([f"{row.Titulo} ({row.VecesPrestado} préstamos)" for row in top_libros])
+
+            prompt = f"Eres el Agente Bibliotecario de la UNDAC. Libros más prestados actualmente: {contexto_libros}. Responde la duda recomendando literatura de forma amable: {pregunta_usuario}"
+            agente_nombre = "Agente Bibliotecario"
+            tema_color = "rojo"
+            icono_clase = "fas fa-book-reader"
+
+        # 3. LLAMADA A GEMINI Y RESPUESTA FINAL
+        respuesta_texto = llamar_ia_directo(prompt)
+
+        return jsonify({
+            "respuesta": respuesta_texto, 
+            "agente": agente_nombre,
+            "tema": tema_color,
+            "icono": icono_clase
+        })
+
+    except Exception as e:
+        print(f"❌ ERROR EN MULTIAGENTE: {str(e)}")
+        error_msg = str(e).lower()
+        # Si fallan todos los modelos, devolvemos un JSON válido para que el Frontend no colapse
+        if "saturación" in error_msg or "high demand" in error_msg or "quota" in error_msg:
+            return jsonify({
+                "respuesta": "El asistente está procesando múltiples consultas en este momento. Por favor, espera unos segundos e intenta nuevamente.", 
+                "agente": "Sistema de Contingencia",
+                "tema": "gris",
+                "icono": "fas fa-exclamation-triangle"
+            })
+        return jsonify({"error": str(e)}), 500
 
 @ml_bp.route('/api/top_estadisticas', methods=['GET'])
 def top_estadisticas():
@@ -126,34 +189,16 @@ def top_estadisticas():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Top 5 Libros más prestados
-        query_libros = """
-            SELECT TOP 5 L.Titulo, COUNT(P.PrestamoID) as Total
-            FROM Prestamos P
-            JOIN Libros L ON P.LibroID = L.LibroID
-            GROUP BY L.Titulo
-            ORDER BY Total DESC
-        """
+        query_libros = "SELECT TOP 5 L.Titulo, COUNT(P.PrestamoID) as Total FROM Prestamos P JOIN Libros L ON P.LibroID = L.LibroID GROUP BY L.Titulo ORDER BY Total DESC"
         cursor.execute(query_libros)
         top_libros = [{"titulo": row.Titulo, "total": row.Total} for row in cursor.fetchall()]
         
-        # Top 5 Alumnos con más préstamos
-        query_alumnos = """
-            SELECT TOP 5 A.NombreCompleto, A.Escuela, COUNT(P.PrestamoID) as Total
-            FROM Prestamos P
-            JOIN Alumnos A ON P.UsuarioDNI = A.DNI
-            GROUP BY A.NombreCompleto, A.Escuela
-            ORDER BY Total DESC
-        """
+        query_alumnos = "SELECT TOP 5 A.NombreCompleto, A.Escuela, COUNT(P.PrestamoID) as Total FROM Prestamos P JOIN Alumnos A ON P.UsuarioDNI = A.DNI GROUP BY A.NombreCompleto, A.Escuela ORDER BY Total DESC"
         cursor.execute(query_alumnos)
         top_alumnos = [{"nombre": row.NombreCompleto, "escuela": row.Escuela, "total": row.Total} for row in cursor.fetchall()]
         
         conn.close()
-        
-        return jsonify({
-            "libros": top_libros,
-            "alumnos": top_alumnos
-        })
+        return jsonify({"libros": top_libros, "alumnos": top_alumnos})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -164,7 +209,6 @@ def datos_graficos():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # 1. ESTADOS (Dona) y KPI Morosidad
         cursor.execute("SELECT EstadoPrestamo, COUNT(PrestamoID) as Total FROM Prestamos GROUP BY EstadoPrestamo")
         estados_raw = {row.EstadoPrestamo: row.Total for row in cursor.fetchall()}
         devueltos = estados_raw.get('Devuelto', 0)
@@ -172,55 +216,27 @@ def datos_graficos():
         retrasados = estados_raw.get('Retrasado', 0)
         total_prestamos = devueltos + activos + retrasados
         
-        porcentaje_morosidad = 0
-        if total_prestamos > 0:
-            porcentaje_morosidad = round((retrasados / total_prestamos) * 100, 1)
+        porcentaje_morosidad = 0 if total_prestamos == 0 else round((retrasados / total_prestamos) * 100, 1)
 
-        # 2. MESES (Gráfico de Línea)
         cursor.execute("SELECT MONTH(FechaPrestamo) as Mes, COUNT(PrestamoID) as Total FROM Prestamos GROUP BY MONTH(FechaPrestamo)")
         meses_dict = {row.Mes: row.Total for row in cursor.fetchall()}
-        # Creamos un arreglo ordenado de Enero (1) a Diciembre (12)
         meses_array = [meses_dict.get(i, 0) for i in range(1, 13)]
 
-        # 3. DÍAS DE LA SEMANA (Gráfico Polar)
-        # DATEPART(dw) devuelve 1=Domingo, 2=Lunes, 3=Martes... hasta 7=Sábado
         cursor.execute("SELECT DATEPART(dw, FechaPrestamo) as Dia, COUNT(PrestamoID) as Total FROM Prestamos GROUP BY DATEPART(dw, FechaPrestamo)")
         dias_dict = {row.Dia: row.Total for row in cursor.fetchall()}
-        dias_array = [
-            dias_dict.get(2, 0), # Lunes
-            dias_dict.get(3, 0), # Martes
-            dias_dict.get(4, 0), # Miércoles
-            dias_dict.get(5, 0), # Jueves
-            dias_dict.get(6, 0), # Viernes
-            dias_dict.get(7, 0)  # Sábado
-        ]
+        dias_array = [dias_dict.get(2, 0), dias_dict.get(3, 0), dias_dict.get(4, 0), dias_dict.get(5, 0), dias_dict.get(6, 0), dias_dict.get(7, 0)]
 
-        # 4. ESCUELAS (Gráfico de Barras Horizontales)
-        cursor.execute("""
-            SELECT A.Escuela, COUNT(P.PrestamoID) as Total 
-            FROM Prestamos P 
-            JOIN Alumnos A ON P.UsuarioDNI = A.DNI 
-            GROUP BY A.Escuela
-            ORDER BY Total DESC
-        """)
+        cursor.execute("SELECT A.Escuela, COUNT(P.PrestamoID) as Total FROM Prestamos P JOIN Alumnos A ON P.UsuarioDNI = A.DNI GROUP BY A.Escuela ORDER BY Total DESC")
         escuelas_raw = cursor.fetchall()
         escuelas_labels = [row.Escuela for row in escuelas_raw]
         escuelas_data = [row.Total for row in escuelas_raw]
 
-        # 5. TIPOS DE USUARIOS (Gráfico de Pie)
-        cursor.execute("""
-            SELECT 'Alumnos' as Tipo, COUNT(P.PrestamoID) as Total FROM Prestamos P JOIN Alumnos A ON P.UsuarioDNI = A.DNI
-            UNION ALL
-            SELECT 'Docentes' as Tipo, COUNT(P.PrestamoID) FROM Prestamos P JOIN Docentes D ON P.UsuarioDNI = D.DNI
-            UNION ALL
-            SELECT 'Personal' as Tipo, COUNT(P.PrestamoID) FROM Prestamos P JOIN PersonalAdministrativo PA ON P.UsuarioDNI = PA.DNI
-        """)
+        cursor.execute("SELECT 'Alumnos' as Tipo, COUNT(P.PrestamoID) as Total FROM Prestamos P JOIN Alumnos A ON P.UsuarioDNI = A.DNI UNION ALL SELECT 'Docentes' as Tipo, COUNT(P.PrestamoID) FROM Prestamos P JOIN Docentes D ON P.UsuarioDNI = D.DNI UNION ALL SELECT 'Personal' as Tipo, COUNT(P.PrestamoID) FROM Prestamos P JOIN PersonalAdministrativo PA ON P.UsuarioDNI = PA.DNI")
         usuarios_raw = {row.Tipo: row.Total for row in cursor.fetchall()}
         usuarios_array = [usuarios_raw.get('Alumnos', 0), usuarios_raw.get('Docentes', 0), usuarios_raw.get('Personal', 0)]
 
         conn.close()
         
-        # Enviamos absolutamente toda la información al Frontend
         return jsonify({
             "estados": [devueltos, activos, retrasados],
             "total_prestamos": total_prestamos,
@@ -233,3 +249,11 @@ def datos_graficos():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@ml_bp.route('/api/ejecutar_agentes', methods=['POST'])
+def ejecutar_agentes():
+    correo_ingeniero_o_admin = "d4ni3l482003@gmail.com" 
+    gerente = Orquestador(correo_admin=correo_ingeniero_o_admin)
+    resultado = gerente.iniciar_comite()
+    return jsonify(resultado)
